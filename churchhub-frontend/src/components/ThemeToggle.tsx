@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/provider";
 
 /**
  * Toggles the `dark` class on <html> and persists the choice in localStorage.
@@ -10,6 +11,7 @@ import { cn } from "@/lib/utils";
  * so here we only read the current state on mount and flip it on click.
  */
 export function ThemeToggle({ className }: { className?: string }) {
+  const { t } = useI18n();
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -31,8 +33,8 @@ export function ThemeToggle({ className }: { className?: string }) {
     <button
       type="button"
       onClick={toggle}
-      aria-label={dark ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
-      title={dark ? "Chế độ sáng" : "Chế độ tối"}
+      aria-label={dark ? t("theme.toLight") : t("theme.toDark")}
+      title={dark ? t("theme.light") : t("theme.dark")}
       className={cn(
         "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800",
         className,

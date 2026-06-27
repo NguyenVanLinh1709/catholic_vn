@@ -8,6 +8,7 @@ import { Modal, ConfirmDialog } from "@/components/Modal";
 import { Badge, LoadingBlock, EmptyState } from "@/components/Feedback";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
+import { useI18n } from "@/lib/i18n/provider";
 import type { AdminUser, Parish, Role } from "@/lib/types";
 import {
   listUsersAction,
@@ -37,6 +38,7 @@ const EMPTY: FormState = {
 
 export default function SuperUsersPage() {
   const toast = useToast();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [page, setPage] = useState(0);
@@ -98,11 +100,11 @@ export default function SuperUsersPage() {
 
   async function save() {
     if (!editing && (!form.email.trim() || !form.password)) {
-      toast.error("Vui lòng nhập email và mật khẩu");
+      toast.error(t("superUsers.needCredentials"));
       return;
     }
     if (form.role === "PARISH_ADMIN" && form.parishId === null) {
-      toast.error("Quản trị giáo xứ cần được gán một nhà thờ");
+      toast.error(t("superUsers.parishRequired"));
       return;
     }
 
@@ -125,7 +127,7 @@ export default function SuperUsersPage() {
         });
     setSaving(false);
     if (res.ok) {
-      toast.success(editing ? "Đã cập nhật tài khoản" : "Đã tạo tài khoản");
+      toast.success(editing ? t("superUsers.updated") : t("superUsers.created"));
       setModalOpen(false);
       void reload();
     } else {
@@ -133,13 +135,16 @@ export default function SuperUsersPage() {
     }
   }
 
+  // Only parish admins are managed here; the lone bootstrap super admin is hidden.
+  const visibleUsers = users.filter((u) => u.role !== "SUPER_ADMIN");
+
   async function confirmDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
     const res = await deleteUserAction(deleteTarget.id);
     setDeleting(false);
     if (res.ok) {
-      toast.success("Đã xoá tài khoản");
+      toast.success(t("superUsers.deleted"));
       setDeleteTarget(null);
       void reload();
     } else {
@@ -150,32 +155,32 @@ export default function SuperUsersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tài khoản quản trị</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("superUsers.title")}</h1>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
-          Tạo tài khoản
+          {t("superUsers.create")}
         </Button>
       </div>
 
       {loading ? (
-        <LoadingBlock />
-      ) : users.length === 0 ? (
-        <EmptyState title="Chưa có tài khoản" action={<Button onClick={openCreate}>Tạo tài khoản</Button>} />
+        <LoadingBlock label={t("common.loading")} />
+      ) : visibleUsers.length === 0 ? (
+        <EmptyState title={t("superUsers.emptyTitle")} action={<Button onClick={openCreate}>{t("superUsers.create")}</Button>} />
       ) : (
         <>
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
                 <tr>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Vai trò</th>
-                  <th className="px-4 py-3">Nhà thờ</th>
-                  <th className="px-4 py-3">Trạng thái</th>
-                  <th className="px-4 py-3 text-right">Thao tác</th>
+                  <th className="px-4 py-3">{t("superUsers.colEmail")}</th>
+                  <th className="px-4 py-3">{t("superUsers.colRole")}</th>
+                  <th className="px-4 py-3">{t("superUsers.colParish")}</th>
+                  <th className="px-4 py-3">{t("superUsers.colStatus")}</th>
+                  <th className="px-4 py-3 text-right">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {users.map((u) => (
+                {visibleUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900 dark:text-gray-100">{u.email}</div>
@@ -185,12 +190,12 @@ export default function SuperUsersPage() {
                       {u.role === "SUPER_ADMIN" ? (
                         <Badge color="blue">Super Admin</Badge>
                       ) : (
-                        <Badge>Parish Admin</Badge>
+                        <Badge>{t("superUsers.roleParishAdmin")}</Badge>
                       )}
                     </td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{parishName(u.parishId)}</td>
                     <td className="px-4 py-3">
-                      {u.enabled ? <Badge color="green">Bật</Badge> : <Badge color="amber">Tắt</Badge>}
+                      {u.enabled ? <Badge color="green">{t("superUsers.statusOn")}</Badge> : <Badge color="amber">{t("superUsers.statusOff")}</Badge>}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
@@ -214,20 +219,20 @@ export default function SuperUsersPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Sửa tài khoản" : "Tạo tài khoản"}
+        title={editing ? t("superUsers.editTitle") : t("superUsers.addTitle")}
         footer={
           <>
             <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={saving}>
-              Huỷ
+              {t("common.cancel")}
             </Button>
             <Button onClick={save} loading={saving}>
-              Lưu
+              {t("common.save")}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Email" required>
+          <Field label={t("superUsers.fieldEmail")} required>
             <Input
               type="email"
               value={form.email}
@@ -235,29 +240,29 @@ export default function SuperUsersPage() {
               onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
             />
           </Field>
-          <Field label={editing ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu"} required={!editing}>
+          <Field label={editing ? t("superUsers.fieldPasswordNew") : t("superUsers.fieldPassword")} required={!editing}>
             <PasswordInput
               value={form.password}
               onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
               placeholder={editing ? "••••••••" : ""}
             />
           </Field>
-          <Field label="Họ tên">
+          <Field label={t("superUsers.fieldFullName")}>
             <Input
               value={form.fullName}
               onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
             />
           </Field>
           {/* Role is fixed: only one (bootstrap-managed) super admin exists, so new/edited
-              accounts are always Quản trị giáo xứ. The lone super admin shows read-only. */}
-          <Field label="Vai trò" required>
+              accounts are always parish admins. The lone super admin shows read-only. */}
+          <Field label={t("superUsers.fieldRole")} required>
             <Input
-              value={form.role === "SUPER_ADMIN" ? "Super Admin" : "Quản trị giáo xứ"}
+              value={form.role === "SUPER_ADMIN" ? "Super Admin" : t("superUsers.roleParishAdmin")}
               disabled
             />
           </Field>
           {form.role === "PARISH_ADMIN" && (
-            <Field label="Nhà thờ phụ trách" required>
+            <Field label={t("superUsers.fieldParish")} required>
               <Select
                 value={form.parishId ?? ""}
                 onChange={(e) =>
@@ -267,7 +272,7 @@ export default function SuperUsersPage() {
                   }))
                 }
               >
-                <option value="">— Chọn nhà thờ —</option>
+                <option value="">{t("superUsers.parishPlaceholder")}</option>
                 {parishes.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -284,7 +289,7 @@ export default function SuperUsersPage() {
                 onChange={(e) => setForm((p) => ({ ...p, enabled: e.target.checked }))}
                 className="h-4 w-4 rounded border-gray-300"
               />
-              Kích hoạt tài khoản
+              {t("superUsers.enabled")}
             </label>
           )}
         </div>
@@ -292,8 +297,8 @@ export default function SuperUsersPage() {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Xoá tài khoản"
-        message={`Xoá tài khoản “${deleteTarget?.email}”?`}
+        title={t("superUsers.deleteTitle")}
+        message={t("superUsers.deleteMessage", { email: deleteTarget?.email ?? "" })}
         loading={deleting}
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}

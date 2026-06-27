@@ -15,27 +15,30 @@ import {
 } from "lucide-react";
 import type { SessionUser } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/provider";
+import type { MessageKey } from "@/lib/i18n/messages";
 import { Button } from "./Button";
 import { ThemeToggle } from "./ThemeToggle";
+import { LanguageToggle } from "./LanguageToggle";
 
 type Section = "admin" | "super";
 interface NavItem {
   href: string;
-  label: string;
+  labelKey: MessageKey;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const NAV: Record<Section, NavItem[]> = {
   admin: [
-    { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
-    { href: "/admin/parish", label: "Thông tin nhà thờ", icon: Building2 },
-    { href: "/admin/priests", label: "Linh mục", icon: UserSquare2 },
-    { href: "/admin/mass-schedules", label: "Giờ lễ", icon: Clock },
-    { href: "/admin/articles", label: "Bài viết", icon: Newspaper },
+    { href: "/admin", labelKey: "nav.overview", icon: LayoutDashboard },
+    { href: "/admin/parish", labelKey: "nav.parishInfo", icon: Building2 },
+    { href: "/admin/priests", labelKey: "nav.priests", icon: UserSquare2 },
+    { href: "/admin/mass-schedules", labelKey: "nav.massSchedules", icon: Clock },
+    { href: "/admin/articles", labelKey: "nav.articles", icon: Newspaper },
   ],
   super: [
-    { href: "/super-admin/parishes", label: "Nhà thờ", icon: Building2 },
-    { href: "/super-admin/users", label: "Tài khoản quản trị", icon: Users },
+    { href: "/super-admin/parishes", labelKey: "nav.parishes", icon: Building2 },
+    { href: "/super-admin/users", labelKey: "nav.users", icon: Users },
   ],
 };
 
@@ -55,16 +58,17 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useI18n();
 
   // Client-side role guard (defence in depth alongside middleware).
   if (!isAllowed(section, user)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-4 text-center">
         <ShieldAlert className="h-10 w-10 text-red-500" />
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Không có quyền truy cập</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Tài khoản của bạn không được phép vào khu vực này.</p>
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("shell.noAccessTitle")}</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("shell.noAccessDesc")}</p>
         <Link href="/" className="text-sm font-medium text-brand-700 hover:underline">
-          ← Về trang chủ
+          {t("common.backHome")}
         </Link>
       </div>
     );
@@ -78,6 +82,13 @@ export function AdminShell({
 
   const items = NAV[section];
 
+  // Pick a single active item: the one whose href is the longest prefix of the
+  // current path. This stops a section root like "/admin" from also lighting up
+  // on its children ("/admin/priests", …) alongside the real page.
+  const activeHref = items
+    .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:flex dark:border-gray-800 dark:bg-gray-900">
@@ -86,11 +97,14 @@ export function AdminShell({
             <Church className="h-6 w-6 text-brand-600" />
             ChurchHub
           </span>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
         <nav className="flex-1 space-y-1 p-3">
           {items.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = item.href === activeHref;
             const Icon = item.icon;
             return (
               <Link
@@ -104,7 +118,7 @@ export function AdminShell({
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
@@ -113,7 +127,7 @@ export function AdminShell({
           <p className="truncate px-3 pb-2 text-xs text-gray-400 dark:text-gray-500">{user.email}</p>
           <Button variant="secondary" size="sm" className="w-full" onClick={logout}>
             <LogOut className="h-4 w-4" />
-            Đăng xuất
+            {t("shell.logout")}
           </Button>
         </div>
       </aside>
@@ -125,6 +139,7 @@ export function AdminShell({
             <Church className="h-5 w-5 text-brand-600" /> ChurchHub
           </span>
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={logout}>
               <LogOut className="h-4 w-4" />

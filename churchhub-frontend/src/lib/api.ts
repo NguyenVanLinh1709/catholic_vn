@@ -7,6 +7,8 @@ import {
   accessCookieOptions,
   refreshCookieOptions,
 } from "./cookies";
+import { getLocale } from "./i18n/server";
+import { translate } from "./i18n/messages";
 import type {
   AdminUser,
   Article,
@@ -36,7 +38,7 @@ export class ApiError extends Error {
 
 function baseUrl(): string {
   const base = process.env.API_BASE_URL;
-  if (!base) throw new ApiError(500, "API_BASE_URL chưa được cấu hình");
+  if (!base) throw new ApiError(500, translate(getLocale(), "error.apiNotConfigured"));
   return base.replace(/\/$/, "");
 }
 
@@ -48,10 +50,11 @@ async function friendlyError(res: Response): Promise<string> {
   } catch {
     /* non-JSON body */
   }
-  if (res.status === 401) return "Phiên đăng nhập đã hết hạn";
-  if (res.status === 403) return "Bạn không có quyền thực hiện thao tác này";
-  if (res.status === 404) return "Không tìm thấy dữ liệu";
-  return `Yêu cầu thất bại (${res.status})`;
+  const locale = getLocale();
+  if (res.status === 401) return translate(locale, "error.sessionExpired");
+  if (res.status === 403) return translate(locale, "error.forbidden");
+  if (res.status === 404) return translate(locale, "error.notFound");
+  return translate(locale, "error.requestFailed", { status: res.status });
 }
 
 interface RequestOptions {

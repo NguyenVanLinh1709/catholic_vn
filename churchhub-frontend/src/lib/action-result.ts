@@ -1,4 +1,6 @@
 import { ApiError } from "./api";
+import { getLocale } from "./i18n/server";
+import { translate } from "./i18n/messages";
 
 /** Discriminated result returned by server actions to client components. */
 export type ActionResult<T = void> =
@@ -14,6 +16,6 @@ export async function runAction<T>(fn: () => Promise<T>): Promise<ActionResult<T
     if (err instanceof ApiError) {
       return { ok: false, status: err.status, message: err.message };
     }
-    return { ok: false, status: 500, message: "Đã xảy ra lỗi không mong muốn" };
+    return { ok: false, status: 500, message: translate(getLocale(), "error.unexpected") };
   }
 }

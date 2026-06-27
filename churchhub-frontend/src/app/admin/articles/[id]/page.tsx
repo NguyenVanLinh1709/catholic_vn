@@ -5,12 +5,14 @@ import { useParams } from "next/navigation";
 import { ArticleEditor } from "@/components/ArticleEditor";
 import { LoadingBlock, EmptyState } from "@/components/Feedback";
 import { useToast } from "@/components/Toast";
+import { useI18n } from "@/lib/i18n/provider";
 import type { Article } from "@/lib/types";
 import { getMyArticle } from "../../actions";
 
 export default function EditArticlePage() {
   const params = useParams<{ id: string }>();
   const toast = useToast();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [article, setArticle] = useState<Article | null>(null);
 
@@ -27,7 +29,7 @@ export default function EditArticlePage() {
     });
   }, [params.id, toast]);
 
-  if (loading) return <LoadingBlock />;
-  if (!article) return <EmptyState title="Không tìm thấy bài viết" />;
+  if (loading) return <LoadingBlock label={t("common.loading")} />;
+  if (!article) return <EmptyState title={t("articles.notFound")} />;
   return <ArticleEditor article={article} />;
 }

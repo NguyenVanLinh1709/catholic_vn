@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/provider";
 
 /**
  * Shared pagination. `page` is 0-based (matches the backend). `onChange`
@@ -16,13 +17,15 @@ export function Pagination({
   totalPages: number;
   onChange: (page: number) => void;
 }) {
+  const { t } = useI18n();
+
   if (totalPages <= 1) return null;
 
   const pages = pageWindow(page, totalPages);
 
   return (
-    <nav className="mt-6 flex items-center justify-center gap-1" aria-label="Phân trang">
-      <PageButton disabled={page <= 0} onClick={() => onChange(page - 1)} aria-label="Trang trước">
+    <nav className="mt-6 flex items-center justify-center gap-1" aria-label={t("pagination.label")}>
+      <PageButton disabled={page <= 0} onClick={() => onChange(page - 1)} aria-label={t("pagination.prev")}>
         <ChevronLeft className="h-4 w-4" />
       </PageButton>
 
@@ -41,7 +44,7 @@ export function Pagination({
       <PageButton
         disabled={page >= totalPages - 1}
         onClick={() => onChange(page + 1)}
-        aria-label="Trang sau"
+        aria-label={t("pagination.next")}
       >
         <ChevronRight className="h-4 w-4" />
       </PageButton>

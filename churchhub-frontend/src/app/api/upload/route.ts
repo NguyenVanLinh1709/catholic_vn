@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/messages";
 
 // Needs the Node runtime (filesystem access).
 export const runtime = "nodejs";
@@ -17,14 +19,15 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get("file");
 
+  const locale = getLocale();
   if (!(file instanceof File)) {
-    return NextResponse.json({ message: "Thiếu tệp ảnh" }, { status: 400 });
+    return NextResponse.json({ message: translate(locale, "upload.missingFile") }, { status: 400 });
   }
   if (!file.type.startsWith("image/")) {
-    return NextResponse.json({ message: "Chỉ chấp nhận tệp ảnh" }, { status: 400 });
+    return NextResponse.json({ message: translate(locale, "upload.imageOnly") }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ message: "Ảnh vượt quá 5MB" }, { status: 400 });
+    return NextResponse.json({ message: translate(locale, "upload.tooLarge") }, { status: 400 });
   }
 
   const bytes = Buffer.from(await file.arrayBuffer());

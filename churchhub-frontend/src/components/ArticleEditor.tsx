@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { Field, Input, Select, Textarea } from "@/components/Field";
 import { useToast } from "@/components/Toast";
 import { uploadImage } from "@/lib/upload";
+import { useI18n } from "@/lib/i18n/provider";
 import type { Article, ArticleStatus } from "@/lib/types";
 import type { ArticleInput } from "@/lib/api";
 import { createMyArticle, editArticle } from "@/app/admin/actions";
@@ -14,6 +15,7 @@ import { createMyArticle, editArticle } from "@/app/admin/actions";
 export function ArticleEditor({ article }: { article?: Article }) {
   const router = useRouter();
   const toast = useToast();
+  const { t } = useI18n();
 
   const [form, setForm] = useState<ArticleInput>({
     title: article?.title ?? "",
@@ -35,9 +37,9 @@ export function ArticleEditor({ article }: { article?: Article }) {
     try {
       const url = await uploadImage(file);
       set("coverUrl", url);
-      toast.success("Đã tải ảnh bìa");
+      toast.success(t("editor.coverUploaded"));
     } catch {
-      toast.error("Tải ảnh thất bại");
+      toast.error(t("common.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -45,7 +47,7 @@ export function ArticleEditor({ article }: { article?: Article }) {
 
   async function save(status: ArticleStatus) {
     if (!form.title.trim()) {
-      toast.error("Vui lòng nhập tiêu đề");
+      toast.error(t("editor.titleRequired"));
       return;
     }
     setSaving(true);
@@ -59,7 +61,7 @@ export function ArticleEditor({ article }: { article?: Article }) {
     const res = article ? await editArticle(article.id, payload) : await createMyArticle(payload);
     setSaving(false);
     if (res.ok) {
-      toast.success(article ? "Đã lưu bài viết" : "Đã tạo bài viết");
+      toast.success(article ? t("editor.saved") : t("editor.created"));
       router.push("/admin/articles");
       router.refresh();
     } else {
@@ -70,22 +72,22 @@ export function ArticleEditor({ article }: { article?: Article }) {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        {article ? "Sửa bài viết" : "Tạo bài viết"}
+        {article ? t("editor.editTitle") : t("editor.createTitle")}
       </h1>
 
       <div className="space-y-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
-        <Field label="Tiêu đề" required>
+        <Field label={t("editor.fieldTitle")} required>
           <Input value={form.title} onChange={(e) => set("title", e.target.value)} />
         </Field>
-        <Field label="Slug (đường dẫn)">
+        <Field label={t("editor.fieldSlug")}>
           <Input
             value={form.slug ?? ""}
             onChange={(e) => set("slug", e.target.value)}
-            placeholder="tự sinh từ tiêu đề nếu để trống"
+            placeholder={t("editor.slugPlaceholder")}
           />
         </Field>
 
-        <Field label="Ảnh bìa">
+        <Field label={t("editor.fieldCover")}>
           {form.coverUrl ? (
             <div className="relative w-full max-w-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -94,7 +96,7 @@ export function ArticleEditor({ article }: { article?: Article }) {
                 type="button"
                 onClick={() => set("coverUrl", "")}
                 className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white"
-                aria-label="Xoá ảnh"
+                aria-label={t("editor.removeImage")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -102,7 +104,7 @@ export function ArticleEditor({ article }: { article?: Article }) {
           ) : (
             <label className="flex w-full max-w-md cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 py-8 text-sm text-gray-500 hover:border-brand-300 dark:border-gray-700 dark:text-gray-400">
               <ImagePlus className="h-6 w-6 text-gray-400 dark:text-gray-500" />
-              {uploading ? "Đang tải…" : "Chọn ảnh bìa"}
+              {uploading ? t("common.uploading") : t("editor.chooseCover")}
               <input
                 type="file"
                 accept="image/*"
@@ -114,7 +116,7 @@ export function ArticleEditor({ article }: { article?: Article }) {
           )}
         </Field>
 
-        <Field label="Nội dung">
+        <Field label={t("editor.fieldContent")}>
           <Textarea
             value={form.content ?? ""}
             onChange={(e) => set("content", e.target.value)}
@@ -122,22 +124,22 @@ export function ArticleEditor({ article }: { article?: Article }) {
           />
         </Field>
 
-        <Field label="Trạng thái">
+        <Field label={t("editor.fieldStatus")}>
           <Select
             value={form.status}
             onChange={(e) => set("status", e.target.value as ArticleStatus)}
           >
-            <option value="DRAFT">Bản nháp</option>
-            <option value="PUBLISHED">Đã đăng</option>
+            <option value="DRAFT">{t("editor.statusDraft")}</option>
+            <option value="PUBLISHED">{t("editor.statusPublished")}</option>
           </Select>
         </Field>
 
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={() => save("DRAFT")} loading={saving}>
-            Lưu nháp
+            {t("editor.saveDraft")}
           </Button>
           <Button onClick={() => save("PUBLISHED")} loading={saving}>
-            Đăng bài
+            {t("editor.publish")}
           </Button>
         </div>
       </div>

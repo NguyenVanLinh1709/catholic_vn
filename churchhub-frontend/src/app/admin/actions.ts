@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import { ApiError } from "@/lib/api";
 import * as api from "@/lib/api";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/messages";
 import type {
   Article,
   ArticleSummary,
@@ -17,9 +19,9 @@ import type {
 /** Resolves the PARISH_ADMIN's own parishId, or throws 403. */
 function requireParishId(): number {
   const user = getCurrentUser();
-  if (!user) throw new ApiError(401, "Phiên đăng nhập đã hết hạn");
+  if (!user) throw new ApiError(401, translate(getLocale(), "error.sessionExpired"));
   if (user.parishId === null) {
-    throw new ApiError(403, "Tài khoản không được gắn với giáo xứ nào");
+    throw new ApiError(403, translate(getLocale(), "error.noParish"));
   }
   return user.parishId;
 }

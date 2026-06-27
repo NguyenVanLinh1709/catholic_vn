@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
+import { useI18n } from "@/lib/i18n/provider";
 import { Input } from "./Field";
 import { Button } from "./Button";
 import { Pagination } from "./Pagination";
 
 /** Search box that drives the `search` query param (resets to page 0). */
-export function SearchBar({ placeholder = "Tìm theo tên nhà thờ…" }: { placeholder?: string }) {
+export function SearchBar({ placeholder }: { placeholder?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+  const { t } = useI18n();
   const [value, setValue] = useState(params.get("search") ?? "");
 
   function submit() {
@@ -32,12 +34,12 @@ export function SearchBar({ placeholder = "Tìm theo tên nhà thờ…" }: { pl
           onKeyDown={(e) => {
             if (e.key === "Enter") submit();
           }}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t("search.placeholderParish")}
           className="pl-9"
-          aria-label="Tìm kiếm"
+          aria-label={t("search.aria")}
         />
       </div>
-      <Button onClick={submit}>Tìm</Button>
+      <Button onClick={submit}>{t("common.search")}</Button>
     </div>
   );
 }
