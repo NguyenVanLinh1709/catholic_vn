@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
+import { TopBar } from "@/components/TopBar";
 import { I18nProvider } from "@/lib/i18n/provider";
 import { getLocale, getTranslations } from "@/lib/i18n/server";
 
@@ -27,7 +28,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <I18nProvider initialLocale={locale}>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            <div className="flex min-h-screen flex-col">
+              <TopBar />
+              <div className="flex flex-1 flex-col">{children}</div>
+            </div>
+          </ToastProvider>
         </I18nProvider>
       </body>
     </html>

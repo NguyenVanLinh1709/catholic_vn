@@ -226,6 +226,18 @@ export function listParishArticles(
   );
 }
 
+/** Admin listing: includes DRAFT articles. Requires manage permission. */
+export function listParishArticlesForAdmin(
+  parishId: number,
+  page = 0,
+  size = 10,
+): Promise<Page<ArticleSummary>> {
+  return apiFetch<Page<ArticleSummary>>(
+    `/api/parishes/${parishId}/articles/manage?page=${page}&size=${size}`,
+    { auth: true },
+  );
+}
+
 export function getArticle(id: number, auth = false): Promise<Article> {
   return apiFetch<Article>(`/api/articles/${id}`, { auth });
 }

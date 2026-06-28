@@ -22,7 +22,7 @@ const EMPTY: MassScheduleInput = {
   note: "",
 };
 
-export default function AdminMassSchedulesPage() {
+export function MassSchedulesSection() {
   const toast = useToast();
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
@@ -105,9 +105,9 @@ export default function AdminMassSchedulesPage() {
   const groups = groupMassSchedules(items);
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("mass.title")}</h1>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t("mass.title")}</h2>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
           {t("common.add")}
@@ -126,7 +126,7 @@ export default function AdminMassSchedulesPage() {
         <div className="space-y-4">
           {groups.map((group) => (
             <div key={group.dayType} className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-5">
-              <h2 className="mb-3 font-medium text-gray-900 dark:text-gray-100">{dayTypeLabel(t, group.dayType)}</h2>
+              <h3 className="mb-3 font-medium text-gray-900 dark:text-gray-100">{dayTypeLabel(t, group.dayType)}</h3>
               <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                 {group.items.map((m) => (
                   <li key={m.id} className="flex items-center gap-3 py-2 text-sm">
@@ -222,6 +222,6 @@ export default function AdminMassSchedulesPage() {
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}
       />
-    </div>
+    </section>
   );
 }
