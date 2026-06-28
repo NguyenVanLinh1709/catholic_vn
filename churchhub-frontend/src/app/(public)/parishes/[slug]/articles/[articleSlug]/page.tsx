@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getArticle, getParishDetail, listParishArticles, ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { getTranslations } from "@/lib/i18n/server";
 
 async function resolveArticleId(slug: string, articleSlug: string) {
   const { parish } = await getParishDetail(slug);
@@ -17,13 +18,14 @@ export async function generateMetadata({
 }: {
   params: { slug: string; articleSlug: string };
 }): Promise<Metadata> {
+  const { t } = getTranslations();
   try {
     const { articleId } = await resolveArticleId(params.slug, params.articleSlug);
-    if (!articleId) return { title: "Bài viết" };
+    if (!articleId) return { title: t("articleDetail.fallbackTitle") };
     const article = await getArticle(articleId);
     return { title: article.title };
   } catch {
-    return { title: "Bài viết" };
+    return { title: t("articleDetail.fallbackTitle") };
   }
 }
 
@@ -32,6 +34,7 @@ export default async function ArticleDetailPage({
 }: {
   params: { slug: string; articleSlug: string };
 }) {
+  const { t, locale } = getTranslations();
   let parishName = "";
   let parishSlug = params.slug;
   let articleId: number | null = null;
@@ -60,20 +63,20 @@ export default async function ArticleDetailPage({
     <article className="mx-auto max-w-3xl space-y-6">
       <nav className="text-sm text-gray-500 dark:text-gray-400">
         <Link href="/" className="hover:text-brand-700">
-          Trang chủ
+          {t("articleDetail.home")}
         </Link>
         <span className="mx-2">/</span>
         <Link href={`/parishes/${parishSlug}`} className="hover:text-brand-700">
           {parishName}
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-gray-700 dark:text-gray-300">Bài viết</span>
+        <span className="text-gray-700 dark:text-gray-300">{t("articleDetail.crumb")}</span>
       </nav>
 
       <header className="space-y-2">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{article.title}</h1>
         {article.publishedAt && (
-          <p className="text-sm text-gray-400 dark:text-gray-500">{formatDate(article.publishedAt)}</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">{formatDate(article.publishedAt, locale)}</p>
         )}
       </header>
 

@@ -9,7 +9,9 @@ import { Modal, ConfirmDialog } from "@/components/Modal";
 import { Badge, LoadingBlock, EmptyState } from "@/components/Feedback";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
+import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/format";
+import { useI18n } from "@/lib/i18n/provider";
 import type { AdminUser, MassSchedule, Parish } from "@/lib/types";
 import type { MassScheduleInput, ParishInput } from "@/lib/api";
 import {
@@ -39,6 +41,7 @@ function massPayload(dayType: MassScheduleInput["dayType"], massTime: string): M
 
 export default function SuperParishesPage() {
   const toast = useToast();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Parish[]>([]);
   const [page, setPage] = useState(0);
@@ -130,7 +133,7 @@ export default function SuperParishesPage() {
 
   async function save() {
     if (!form.name.trim()) {
-      toast.error("Vui lòng nhập tên nhà thờ");
+      toast.error(t("superParishes.nameRequired"));
       return;
     }
     setSaving(true);
@@ -173,9 +176,9 @@ export default function SuperParishesPage() {
     setSaving(false);
     const problems = [massError, adminError].filter(Boolean).join("; ");
     if (problems) {
-      toast.error(`Đã lưu nhà thờ nhưng có lỗi: ${problems}`);
+      toast.error(t("superParishes.savedWithErrors", { problems }));
     } else {
-      toast.success(editing ? "Đã cập nhật" : "Đã tạo nhà thờ");
+      toast.success(editing ? t("common.updated") : t("superParishes.created"));
     }
     setModalOpen(false);
     void reload();
@@ -219,7 +222,7 @@ export default function SuperParishesPage() {
     const res = await deleteParishAction(deleteTarget.id);
     setDeleting(false);
     if (res.ok) {
-      toast.success("Đã xoá nhà thờ");
+      toast.success(t("superParishes.deleted"));
       setDeleteTarget(null);
       void reload();
     } else {
@@ -230,10 +233,10 @@ export default function SuperParishesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Nhà thờ</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("superParishes.title")}</h1>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
-          Thêm nhà thờ
+          {t("superParishes.add")}
         </Button>
       </div>
 
@@ -244,38 +247,36 @@ export default function SuperParishesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && reload(0, search)}
-            placeholder="Tìm theo tên…"
+            placeholder={t("superParishes.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         <Button variant="secondary" onClick={() => reload(0, search)}>
-          Tìm
+          {t("common.search")}
         </Button>
       </div>
 
       {loading ? (
-        <LoadingBlock />
+        <LoadingBlock label={t("common.loading")} />
       ) : items.length === 0 ? (
-        <EmptyState title="Chưa có nhà thờ" action={<Button onClick={openCreate}>Thêm nhà thờ</Button>} />
+        <EmptyState title={t("superParishes.emptyTitle")} action={<Button onClick={openCreate}>{t("superParishes.add")}</Button>} />
       ) : (
         <>
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
                 <tr>
-                  <th className="px-4 py-3">Tên</th>
-                  <th className="px-4 py-3">Slug</th>
-                  <th className="px-4 py-3">Trạng thái</th>
-                  <th className="px-4 py-3 text-right">Thao tác</th>
+                  <th className="px-4 py-3">{t("superParishes.colName")}</th>
+                  <th className="px-4 py-3">{t("superParishes.colStatus")}</th>
+                  <th className="px-4 py-3 text-right">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {items.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{p.name}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.slug}</td>
                     <td className="px-4 py-3">
-                      {p.active ? <Badge color="green">Hoạt động</Badge> : <Badge>Ẩn</Badge>}
+                      {p.active ? <Badge color="green">{t("superParishes.statusActive")}</Badge> : <Badge>{t("superParishes.statusHidden")}</Badge>}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
@@ -304,67 +305,73 @@ export default function SuperParishesPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Sửa nhà thờ" : "Thêm nhà thờ"}
+        title={editing ? t("superParishes.editTitle") : t("superParishes.addTitle")}
         footer={
           <>
             <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={saving}>
-              Huỷ
+              {t("common.cancel")}
             </Button>
             <Button onClick={save} loading={saving}>
-              Lưu
+              {t("common.save")}
             </Button>
           </>
         }
       >
-        <div className="space-y-4">
-          <Field label="Tên nhà thờ" required>
-            <Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
-          </Field>
-          <Field label="Địa chỉ">
-            <Input
-              value={form.address ?? ""}
-              onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-            />
-          </Field>
-          <Field label="Điện thoại">
-            <Input
-              value={form.phone ?? ""}
-              onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-            />
-          </Field>
-          <Field label="Mô tả">
-            <Textarea
-              value={form.description ?? ""}
-              onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-            />
-          </Field>
+        <div className="space-y-6">
+          <section className="space-y-4">
+            <Field label={t("superParishes.fieldName")} required>
+              <Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
+            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("superParishes.fieldAddress")}>
+                <Input
+                  value={form.address ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
+                />
+              </Field>
+              <Field label={t("superParishes.fieldPhone")}>
+                <Input
+                  value={form.phone ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                />
+              </Field>
+            </div>
+            <Field label={t("superParishes.fieldDescription")}>
+              <Textarea
+                value={form.description ?? ""}
+                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+              />
+            </Field>
+          </section>
 
-          <TimeSlots
-            label="Giờ lễ trong tuần"
-            times={weekdayTimes}
-            onChange={setWeekdayTimes}
-          />
-          <TimeSlots
-            label="Giờ lễ cuối tuần"
-            times={weekendTimes}
-            onChange={setWeekendTimes}
-          />
+          <Section title={t("superParishes.sectionMass")}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <TimeSlots label={t("superParishes.slotWeekday")} times={weekdayTimes} onChange={setWeekdayTimes} />
+              <TimeSlots label={t("superParishes.slotWeekend")} times={weekendTimes} onChange={setWeekendTimes} />
+            </div>
+          </Section>
 
           {editing && (
-            <Field label="Người quản trị giáo xứ">
+            <Section title={t("superParishes.sectionAdmins")}>
               {adminPool.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Chưa có tài khoản quản trị giáo xứ nào. Tạo ở mục “Tài khoản”.
+                <p className="rounded-lg border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                  {t("superParishes.adminsEmpty")}
                 </p>
               ) : (
-                <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border border-gray-200 p-2">
+                <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
                   {adminPool.map((u) => {
                     const checked = selectedAdminIds.includes(u.id);
                     const elsewhere = u.parishId !== null && u.parishId !== editing.id;
+                    const name = u.fullName || u.email;
                     return (
                       <label
                         key={u.id}
-                        className="flex items-center gap-2 rounded px-1 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                        className={cn(
+                          "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 transition",
+                          checked
+                            ? "border-brand-500 bg-brand-50 dark:border-brand-500/60 dark:bg-brand-500/10"
+                            : "border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50",
+                        )}
                       >
                         <input
                           type="checkbox"
@@ -376,43 +383,80 @@ export default function SuperParishesPage() {
                                 : ids.filter((id) => id !== u.id),
                             )
                           }
-                          className="h-4 w-4 rounded border-gray-300"
+                          className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                         />
-                        <span className="text-gray-900 dark:text-gray-100">{u.fullName || u.email}</span>
-                        <span className="text-gray-400 dark:text-gray-500">{u.email}</span>
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold uppercase text-brand-700 dark:bg-brand-500/20 dark:text-brand-300">
+                          {initials(name)}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {name}
+                          </span>
+                          <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                            {u.email}
+                          </span>
+                        </span>
                         {elsewhere && !checked && (
-                          <span className="ml-auto text-xs text-amber-600">đang ở nhà thờ khác</span>
+                          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
+                            {t("superParishes.adminElsewhere")}
+                          </span>
                         )}
                       </label>
                     );
                   })}
                 </div>
               )}
-            </Field>
+            </Section>
           )}
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-800">
+            <span>
+              <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">
+                {t("superParishes.active")}
+              </span>
+              <span className="block text-xs text-gray-500 dark:text-gray-400">
+                {t("superParishes.activeHint")}
+              </span>
+            </span>
             <input
               type="checkbox"
               checked={form.isActive ?? true}
               onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-5 w-5 shrink-0 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
             />
-            Đang hoạt động
           </label>
         </div>
       </Modal>
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Xoá nhà thờ"
-        message={`Xoá “${deleteTarget?.name}”? Toàn bộ linh mục, giờ lễ và bài viết liên quan cũng sẽ bị xoá.`}
+        title={t("superParishes.deleteTitle")}
+        message={t("superParishes.deleteMessage", { name: deleteTarget?.name ?? "" })}
         loading={deleting}
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}
       />
     </div>
   );
+}
+
+/** A titled group within the form, separated by a subtle top divider. */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-3 border-t border-gray-100 pt-5 dark:border-gray-800">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+/** Up-to-two-letter initials from a name or email, for the admin avatar. */
+function initials(value: string): string {
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
+  return value.slice(0, 2).toUpperCase();
 }
 
 /** Editable list of mass times for a day-type group (weekday / weekend). */
@@ -425,12 +469,20 @@ function TimeSlots({
   times: string[];
   onChange: (times: string[]) => void;
 }) {
+  const { t } = useI18n();
   return (
     <Field label={label}>
       <div className="space-y-2">
+        {times.length === 0 && (
+          <p className="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-xs text-gray-400 dark:border-gray-800 dark:text-gray-500">
+            {t("superParishes.slotEmpty")}
+          </p>
+        )}
         {times.map((time, i) => (
           <div key={i} className="flex items-center gap-2">
-            <Clock className="h-4 w-4 shrink-0 text-brand-500" />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+              <Clock className="h-4 w-4" />
+            </span>
             <Input
               type="time"
               value={time}
@@ -441,6 +493,7 @@ function TimeSlots({
               variant="ghost"
               size="sm"
               onClick={() => onChange(times.filter((_, j) => j !== i))}
+              aria-label={t("superParishes.slotRemove")}
             >
               <X className="h-4 w-4 text-red-500" />
             </Button>
@@ -448,7 +501,7 @@ function TimeSlots({
         ))}
         <Button variant="secondary" size="sm" onClick={() => onChange([...times, "07:00"])}>
           <Plus className="h-4 w-4" />
-          Thêm khung giờ
+          {t("superParishes.slotAdd")}
         </Button>
       </div>
     </Field>

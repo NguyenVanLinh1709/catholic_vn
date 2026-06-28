@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { X } from "lucide-react";
+import { useI18n } from "@/lib/i18n/provider";
 import { Button } from "./Button";
 
 export function Modal({
@@ -17,6 +18,7 @@ export function Modal({
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
+  const { t } = useI18n();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -46,7 +48,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             className="text-gray-400 transition hover:text-gray-600 dark:hover:text-gray-200"
-            aria-label="Đóng"
+            aria-label={t("common.close")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -64,7 +66,7 @@ export function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = "Xoá",
+  confirmLabel,
   loading = false,
   onConfirm,
   onClose,
@@ -77,6 +79,7 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <Modal
       open={open}
@@ -85,10 +88,10 @@ export function ConfirmDialog({
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Huỷ
+            {t("common.cancel")}
           </Button>
           <Button variant="danger" onClick={onConfirm} loading={loading}>
-            {confirmLabel}
+            {confirmLabel ?? t("common.delete")}
           </Button>
         </>
       }

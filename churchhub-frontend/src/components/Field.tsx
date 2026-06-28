@@ -3,9 +3,10 @@
 import { forwardRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/provider";
 
 const baseControl =
-  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-gray-50 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 dark:text-gray-500";
+  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-gray-50 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400";
 
 export function Label({
   htmlFor,
@@ -35,6 +36,7 @@ export const PasswordInput = forwardRef<
   HTMLInputElement,
   Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">
 >(function PasswordInput({ className, ...props }, ref) {
+  const { t } = useI18n();
   const [visible, setVisible] = useState(false);
   return (
     <div className="relative">
@@ -48,7 +50,7 @@ export const PasswordInput = forwardRef<
         type="button"
         onClick={() => setVisible((v) => !v)}
         tabIndex={-1}
-        aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+        aria-label={visible ? t("field.hidePassword") : t("field.showPassword")}
         className="absolute right-0 top-0 flex h-full items-center px-3 text-gray-400 hover:text-gray-600 dark:text-gray-400"
       >
         {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

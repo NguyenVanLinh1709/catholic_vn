@@ -8,7 +8,8 @@ import { Modal, ConfirmDialog } from "@/components/Modal";
 import { LoadingBlock, EmptyState } from "@/components/Feedback";
 import { useToast } from "@/components/Toast";
 import { uploadImage } from "@/lib/upload";
-import { PRIEST_ROLE_LABEL } from "@/lib/format";
+import { useI18n } from "@/lib/i18n/provider";
+import { priestRoleLabel } from "@/lib/i18n/labels";
 import type { Priest, PriestRole } from "@/lib/types";
 import type { PriestInput } from "@/lib/api";
 import { listMyPriests, createMyPriest, editPriest, removePriest } from "../actions";
@@ -17,6 +18,7 @@ const EMPTY: PriestInput = { fullName: "", role: "PASTOR", phone: "", photoUrl: 
 
 export default function AdminPriestsPage() {
   const toast = useToast();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [priests, setPriests] = useState<Priest[]>([]);
 
@@ -65,9 +67,9 @@ export default function AdminPriestsPage() {
     try {
       const url = await uploadImage(file);
       setForm((p) => ({ ...p, photoUrl: url }));
-      toast.success("Đã tải ảnh lên");
+      toast.success(t("common.uploadSuccess"));
     } catch {
-      toast.error("Tải ảnh thất bại");
+      toast.error(t("common.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -75,7 +77,7 @@ export default function AdminPriestsPage() {
 
   async function save() {
     if (!form.fullName.trim()) {
-      toast.error("Vui lòng nhập họ tên");
+      toast.error(t("priests.nameRequired"));
       return;
     }
     setSaving(true);
@@ -87,7 +89,7 @@ export default function AdminPriestsPage() {
     const res = editing ? await editPriest(editing.id, payload) : await createMyPriest(payload);
     setSaving(false);
     if (res.ok) {
-      toast.success(editing ? "Đã cập nhật" : "Đã thêm linh mục");
+      toast.success(editing ? t("common.updated") : t("priests.created"));
       setModalOpen(false);
       void reload();
     } else {
@@ -101,7 +103,7 @@ export default function AdminPriestsPage() {
     const res = await removePriest(deleteTarget.id);
     setDeleting(false);
     if (res.ok) {
-      toast.success("Đã xoá");
+      toast.success(t("common.deleted"));
       setDeleteTarget(null);
       void reload();
     } else {
@@ -112,31 +114,31 @@ export default function AdminPriestsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Linh mục</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("priests.title")}</h1>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
-          Thêm
+          {t("common.add")}
         </Button>
       </div>
 
       {loading ? (
-        <LoadingBlock />
+        <LoadingBlock label={t("common.loading")} />
       ) : priests.length === 0 ? (
         <EmptyState
-          title="Chưa có linh mục"
-          description="Thêm cha xứ, cha phó cho giáo xứ của bạn."
-          action={<Button onClick={openCreate}>Thêm linh mục</Button>}
+          title={t("priests.emptyTitle")}
+          description={t("priests.emptyDesc")}
+          action={<Button onClick={openCreate}>{t("priests.emptyAction")}</Button>}
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
               <tr>
-                <th className="px-4 py-3">Họ tên</th>
-                <th className="px-4 py-3">Chức vụ</th>
-                <th className="px-4 py-3">Điện thoại</th>
-                <th className="px-4 py-3">Thứ tự</th>
-                <th className="px-4 py-3 text-right">Thao tác</th>
+                <th className="px-4 py-3">{t("priests.colName")}</th>
+                <th className="px-4 py-3">{t("priests.colRole")}</th>
+                <th className="px-4 py-3">{t("priests.colPhone")}</th>
+                <th className="px-4 py-3">{t("priests.colOrder")}</th>
+                <th className="px-4 py-3 text-right">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -157,7 +159,7 @@ export default function AdminPriestsPage() {
                         <span className="font-medium text-gray-900 dark:text-gray-100">{p.fullName}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{PRIEST_ROLE_LABEL[p.role]}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{priestRoleLabel(t, p.role)}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.phone ?? "—"}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.orderIndex}</td>
                     <td className="px-4 py-3">
@@ -180,48 +182,48 @@ export default function AdminPriestsPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Sửa linh mục" : "Thêm linh mục"}
+        title={editing ? t("priests.editTitle") : t("priests.addTitle")}
         footer={
           <>
             <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={saving}>
-              Huỷ
+              {t("common.cancel")}
             </Button>
             <Button onClick={save} loading={saving}>
-              Lưu
+              {t("common.save")}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Họ tên" required>
+          <Field label={t("priests.fieldName")} required>
             <Input
               value={form.fullName}
               onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
             />
           </Field>
-          <Field label="Chức vụ" required>
+          <Field label={t("priests.fieldRole")} required>
             <Select
               value={form.role}
               onChange={(e) => setForm((p) => ({ ...p, role: e.target.value as PriestRole }))}
             >
-              <option value="PASTOR">{PRIEST_ROLE_LABEL.PASTOR}</option>
-              <option value="PAROCHIAL_VICAR">{PRIEST_ROLE_LABEL.PAROCHIAL_VICAR}</option>
+              <option value="PASTOR">{priestRoleLabel(t, "PASTOR")}</option>
+              <option value="PAROCHIAL_VICAR">{priestRoleLabel(t, "PAROCHIAL_VICAR")}</option>
             </Select>
           </Field>
-          <Field label="Điện thoại">
+          <Field label={t("priests.fieldPhone")}>
             <Input
               value={form.phone ?? ""}
               onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
             />
           </Field>
-          <Field label="Thứ tự hiển thị">
+          <Field label={t("priests.fieldOrder")}>
             <Input
               type="number"
               value={form.orderIndex ?? 0}
               onChange={(e) => setForm((p) => ({ ...p, orderIndex: Number(e.target.value) }))}
             />
           </Field>
-          <Field label="Ảnh">
+          <Field label={t("priests.fieldPhoto")}>
             <div className="flex items-center gap-3">
               {form.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -245,8 +247,8 @@ export default function AdminPriestsPage() {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Xoá linh mục"
-        message={`Bạn chắc chắn muốn xoá “${deleteTarget?.fullName}”?`}
+        title={t("priests.deleteTitle")}
+        message={t("priests.deleteMessage", { name: deleteTarget?.fullName ?? "" })}
         loading={deleting}
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}

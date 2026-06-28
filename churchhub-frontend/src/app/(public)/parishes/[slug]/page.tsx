@@ -4,14 +4,9 @@ import type { Metadata } from "next";
 import { Church, Clock, MapPin, Phone, User } from "lucide-react";
 import { getParishDetail, listParishArticles, ApiError } from "@/lib/api";
 import type { ArticleSummary } from "@/lib/types";
-import {
-  PRIEST_ROLE_LABEL,
-  DAY_TYPE_LABEL,
-  dayOfWeekLabel,
-  formatTime,
-  formatRelativeTime,
-  groupMassSchedules,
-} from "@/lib/format";
+import { formatTime, groupMassSchedules } from "@/lib/format";
+import { getTranslations } from "@/lib/i18n/server";
+import { dayTypeLabel, priestRoleLabel, dayOfWeekLabel, relativeTime } from "@/lib/i18n/labels";
 import { EmptyState } from "@/components/Feedback";
 
 export async function generateMetadata({
@@ -23,11 +18,13 @@ export async function generateMetadata({
     const { parish } = await getParishDetail(params.slug);
     return { title: parish.name, description: parish.description ?? undefined };
   } catch {
-    return { title: "Nhà thờ" };
+    const { t } = getTranslations();
+    return { title: t("parishDetail.fallbackTitle") };
   }
 }
 
 export default async function ParishDetailPage({ params }: { params: { slug: string } }) {
+  const { t, locale } = getTranslations();
   let detail;
   try {
     detail = await getParishDetail(params.slug);
@@ -55,7 +52,7 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
     <div className="space-y-8">
       <nav className="text-sm text-gray-500 dark:text-gray-400">
         <Link href="/" className="hover:text-brand-700 dark:hover:text-brand-400">
-          Trang chủ
+          {t("parishDetail.home")}
         </Link>
         <span className="mx-2">/</span>
         <span className="text-gray-700 dark:text-gray-300">{parish.name}</span>
@@ -82,9 +79,9 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
 
       {/* Priests */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Linh mục</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("parishDetail.priests")}</h2>
         {sortedPriests.length === 0 ? (
-          <EmptyState title="Chưa có thông tin linh mục" />
+          <EmptyState title={t("parishDetail.priestsEmpty")} />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {sortedPriests.map((priest) => (
@@ -106,7 +103,7 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
                 )}
                 <div>
                   <p className="font-medium text-gray-900 dark:text-gray-100">{priest.fullName}</p>
-                  <p className="text-sm text-brand-700 dark:text-brand-400">{PRIEST_ROLE_LABEL[priest.role]}</p>
+                  <p className="text-sm text-brand-700 dark:text-brand-400">{priestRoleLabel(t, priest.role)}</p>
                   {priest.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{priest.phone}</p>}
                 </div>
               </div>
@@ -117,21 +114,21 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
 
       {/* Mass schedules */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Giờ lễ</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("parishDetail.mass")}</h2>
         {massGroups.length === 0 ? (
-          <EmptyState title="Chưa có thông tin giờ lễ" />
+          <EmptyState title={t("parishDetail.massEmpty")} />
         ) : (
           <div className="space-y-4">
             {massGroups.map((group) => (
               <div key={group.dayType} className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-5">
-                <h3 className="mb-3 font-medium text-gray-900 dark:text-gray-100">{DAY_TYPE_LABEL[group.dayType]}</h3>
+                <h3 className="mb-3 font-medium text-gray-900 dark:text-gray-100">{dayTypeLabel(t, group.dayType)}</h3>
                 <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                   {group.items.map((mass) => (
                     <li key={mass.id} className="flex items-center gap-3 py-2 text-sm">
                       <Clock className="h-4 w-4 shrink-0 text-brand-500" />
                       <span className="font-medium text-gray-900 dark:text-gray-100">{formatTime(mass.massTime)}</span>
                       {mass.dayType !== "WEEKDAY" || mass.dayOfWeek !== null ? (
-                        <span className="text-gray-500 dark:text-gray-400">{dayOfWeekLabel(mass.dayOfWeek)}</span>
+                        <span className="text-gray-500 dark:text-gray-400">{dayOfWeekLabel(t, mass.dayOfWeek)}</span>
                       ) : null}
                       {mass.label && <span className="text-gray-700 dark:text-gray-300">— {mass.label}</span>}
                       {mass.note && <span className="text-gray-400 dark:text-gray-500">({mass.note})</span>}
@@ -146,9 +143,9 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
 
       {/* Articles — dòng thời gian kiểu Facebook */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tin tức &amp; sự kiện</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("parishDetail.news")}</h2>
         {articles.length === 0 ? (
-          <EmptyState title="Chưa có bài viết" />
+          <EmptyState title={t("parishDetail.newsEmpty")} />
         ) : (
           <div className="mx-auto max-w-xl space-y-4">
             {articles.map((article) => {
@@ -166,7 +163,7 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-gray-900 dark:text-gray-100">{parish.name}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatRelativeTime(article.publishedAt)}
+                        {relativeTime(t, locale, article.publishedAt)}
                       </p>
                     </div>
                   </div>
@@ -196,7 +193,7 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
                       href={href}
                       className="text-sm font-medium text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
                     >
-                      Đọc tiếp →
+                      {t("parishDetail.readMore")}
                     </Link>
                   </div>
                 </article>

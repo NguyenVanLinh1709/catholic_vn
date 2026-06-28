@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogOut, LayoutDashboard } from "lucide-react";
 import type { SessionUser } from "@/lib/types";
+import { useI18n } from "@/lib/i18n/provider";
 import { Button } from "./Button";
 
 export function UserMenu({ user }: { user: SessionUser | null }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
 
   if (!user) {
@@ -17,7 +19,7 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
         href="/login"
         className="text-sm font-medium text-brand-700 transition hover:text-brand-800"
       >
-        Đăng nhập
+        {t("header.login")}
       </Link>
     );
   }
@@ -42,11 +44,11 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 transition hover:text-brand-700 dark:text-gray-300 dark:hover:text-brand-400"
       >
         <LayoutDashboard className="h-4 w-4" />
-        Quản trị
+        {t("header.admin")}
       </Link>
       <Button variant="secondary" size="sm" onClick={logout} loading={loading}>
         <LogOut className="h-4 w-4" />
-        Đăng xuất
+        {t("shell.logout")}
       </Button>
     </div>
   );

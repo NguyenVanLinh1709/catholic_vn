@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Church } from "lucide-react";
 import type { SessionUser } from "@/lib/types";
+import { getTranslations } from "@/lib/i18n/server";
 import { UserMenu } from "./UserMenu";
 import { ThemeToggle } from "./ThemeToggle";
+import { LanguageToggle } from "./LanguageToggle";
 
 export function SiteHeader({ user }: { user: SessionUser | null }) {
   return (
@@ -16,6 +18,7 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
           <span>ChurchHub</span>
         </Link>
         <div className="flex items-center gap-3">
+          <LanguageToggle />
           <ThemeToggle />
           <UserMenu user={user} />
         </div>
@@ -25,10 +28,11 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
 }
 
 export function SiteFooter() {
+  const { t } = getTranslations();
   return (
     <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto max-w-5xl px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-        © {new Date().getFullYear()} ChurchHub — Tổng hợp thông tin giáo xứ.
+        {t("footer.copyright", { year: new Date().getFullYear() })}
       </div>
     </footer>
   );

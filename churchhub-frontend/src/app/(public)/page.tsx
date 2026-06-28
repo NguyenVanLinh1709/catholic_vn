@@ -4,6 +4,7 @@ import { listParishes, ApiError } from "@/lib/api";
 import type { Parish } from "@/lib/types";
 import { SearchBar, QueryPagination } from "@/components/QueryControls";
 import { EmptyState } from "@/components/Feedback";
+import { getTranslations } from "@/lib/i18n/server";
 
 const PAGE_SIZE = 12;
 
@@ -12,6 +13,7 @@ export default async function HomePage({
 }: {
   searchParams: { search?: string; page?: string };
 }) {
+  const { t } = getTranslations();
   const search = searchParams.search?.trim() || undefined;
   const page = Number(searchParams.page ?? "0") || 0;
 
@@ -26,35 +28,32 @@ export default async function HomePage({
     totalPages = result.totalPages;
     totalElements = result.totalElements;
   } catch (err) {
-    loadError =
-      err instanceof ApiError ? err.message : "Không thể tải danh sách nhà thờ lúc này.";
+    loadError = err instanceof ApiError ? err.message : t("home.loadError");
   }
 
   return (
     <div className="space-y-6">
       <section className="space-y-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Danh sách nhà thờ / giáo xứ</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("home.title")}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Tra cứu thông tin, giờ lễ và tin tức của các giáo xứ.
+          {t("home.subtitle")}
         </p>
       </section>
 
       <SearchBar />
 
       {loadError ? (
-        <EmptyState title="Đã xảy ra lỗi" description={loadError} />
+        <EmptyState title={t("home.errorTitle")} description={loadError} />
       ) : parishes.length === 0 ? (
         <EmptyState
-          title="Không tìm thấy nhà thờ nào"
+          title={t("home.emptyTitle")}
           description={
-            search
-              ? `Không có kết quả cho “${search}”. Thử từ khoá khác.`
-              : "Hiện chưa có dữ liệu nhà thờ."
+            search ? t("home.emptySearch", { query: search }) : t("home.emptyNoData")
           }
         />
       ) : (
         <>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{totalElements} kết quả</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.results", { count: totalElements })}</p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {parishes.map((parish) => (
               <ParishCard key={parish.id} parish={parish} />
