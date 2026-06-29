@@ -118,23 +118,33 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
         {massGroups.length === 0 ? (
           <EmptyState title={t("parishDetail.massEmpty")} />
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {massGroups.map((group) => (
-              <div key={group.dayType} className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-5">
-                <h3 className="mb-3 font-medium text-gray-900 dark:text-gray-100">{dayTypeLabel(t, group.dayType)}</h3>
-                <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {group.items.map((mass) => (
-                    <li key={mass.id} className="flex items-center gap-3 py-2 text-sm">
-                      <Clock className="h-4 w-4 shrink-0 text-brand-500" />
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{formatTime(mass.massTime)}</span>
-                      {mass.dayType !== "WEEKDAY" || mass.dayOfWeek !== null ? (
-                        <span className="text-gray-500 dark:text-gray-400">{dayOfWeekLabel(t, mass.dayOfWeek)}</span>
-                      ) : null}
-                      {mass.label && <span className="text-gray-700 dark:text-gray-300">— {mass.label}</span>}
-                      {mass.note && <span className="text-gray-400 dark:text-gray-500">({mass.note})</span>}
-                    </li>
-                  ))}
-                </ul>
+              <div key={group.dayType} className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-4">
+                <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">{dayTypeLabel(t, group.dayType)}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {group.items.map((mass) => {
+                    // Day label only when it adds info — hidden for Sunday (the group
+                    // heading already says "Chúa Nhật") and for whole-week weekday items.
+                    const showDay = group.dayType !== "SUNDAY" && mass.dayOfWeek !== null;
+                    return (
+                      <span
+                        key={mass.id}
+                        title={mass.note ?? undefined}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 text-sm dark:border-gray-700 dark:bg-gray-800/60"
+                      >
+                        <Clock className="h-3.5 w-3.5 shrink-0 text-brand-500" />
+                        <span className="font-medium tabular-nums text-gray-900 dark:text-gray-100">{formatTime(mass.massTime)}</span>
+                        {showDay && (
+                          <span className="text-gray-500 dark:text-gray-400">· {dayOfWeekLabel(t, mass.dayOfWeek)}</span>
+                        )}
+                        {mass.label && (
+                          <span className="text-gray-500 dark:text-gray-400">· {mass.label}</span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </div>

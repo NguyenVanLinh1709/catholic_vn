@@ -79,13 +79,6 @@ export function ArticleEditor({ article }: { article?: Article }) {
         <Field label={t("editor.fieldTitle")} required>
           <Input value={form.title} onChange={(e) => set("title", e.target.value)} />
         </Field>
-        <Field label={t("editor.fieldSlug")}>
-          <Input
-            value={form.slug ?? ""}
-            onChange={(e) => set("slug", e.target.value)}
-            placeholder={t("editor.slugPlaceholder")}
-          />
-        </Field>
 
         <Field label={t("editor.fieldCover")}>
           {form.coverUrl ? (
@@ -135,6 +128,13 @@ export function ArticleEditor({ article }: { article?: Article }) {
         </Field>
 
         <div className="flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => router.push("/admin/articles")}
+            disabled={saving}
+          >
+            {t("common.cancel")}
+          </Button>
           <Button variant="secondary" onClick={() => save("DRAFT")} loading={saving}>
             {t("editor.saveDraft")}
           </Button>
