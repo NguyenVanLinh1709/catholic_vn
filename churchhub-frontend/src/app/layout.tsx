@@ -4,15 +4,39 @@ import { ToastProvider } from "@/components/Toast";
 import { TopBar } from "@/components/TopBar";
 import { I18nProvider } from "@/lib/i18n/provider";
 import { getLocale, getTranslations } from "@/lib/i18n/server";
+import { SITE_URL } from "@/lib/site";
 
 export function generateMetadata(): Metadata {
-  const { t } = getTranslations();
+  const { t, locale } = getTranslations();
+  const title = t("meta.title");
+  const description = t("meta.description");
   return {
+    metadataBase: new URL(SITE_URL),
     title: {
-      default: t("meta.title"),
+      default: title,
       template: "%s | ChurchHub",
     },
-    description: t("meta.description"),
+    description,
+    applicationName: "ChurchHub",
+    alternates: { canonical: "/" },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, "max-image-preview": "large" },
+    },
+    openGraph: {
+      type: "website",
+      siteName: "ChurchHub",
+      locale: locale === "vi" ? "vi_VN" : "en_GB",
+      url: "/",
+      title,
+      description,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
