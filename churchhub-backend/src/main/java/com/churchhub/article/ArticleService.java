@@ -35,6 +35,16 @@ public class ArticleService {
                         .map(ArticleSummaryResponse::from));
     }
 
+    /** Admin listing: every article (incl. DRAFT) of a parish, for its managers only. */
+    @Transactional(readOnly = true)
+    public PageResponse<ArticleSummaryResponse> listAllByParishForManage(Long parishId, Pageable pageable) {
+        requireParish(parishId);
+        parishAccess.assertCanManage(parishId);
+        return PageResponse.from(
+                articleRepository.findByParishId(parishId, pageable)
+                        .map(ArticleSummaryResponse::from));
+    }
+
     /** Public read: PUBLISHED is visible to all; DRAFT only to managers. */
     @Transactional(readOnly = true)
     public ArticleResponse getReadable(Long id) {

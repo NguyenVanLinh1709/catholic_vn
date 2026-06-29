@@ -35,7 +35,7 @@ export async function getMyParish(): Promise<ActionResult<Parish | null>> {
 export async function updateMyParish(input: api.ParishInput): Promise<ActionResult<Parish>> {
   return runAction(async () => {
     const result = await api.updateParish(requireParishId(), input);
-    revalidatePath("/admin/parish");
+    revalidatePath("/admin");
     return result;
   });
 }
@@ -49,7 +49,7 @@ export async function listMyPriests(): Promise<ActionResult<Priest[]>> {
 export async function createMyPriest(input: api.PriestInput): Promise<ActionResult<Priest>> {
   return runAction(async () => {
     const result = await api.createPriest(requireParishId(), input);
-    revalidatePath("/admin/priests");
+    revalidatePath("/admin");
     return result;
   });
 }
@@ -57,7 +57,7 @@ export async function createMyPriest(input: api.PriestInput): Promise<ActionResu
 export async function editPriest(id: number, input: api.PriestInput): Promise<ActionResult<Priest>> {
   return runAction(async () => {
     const result = await api.updatePriest(id, input);
-    revalidatePath("/admin/priests");
+    revalidatePath("/admin");
     return result;
   });
 }
@@ -65,7 +65,7 @@ export async function editPriest(id: number, input: api.PriestInput): Promise<Ac
 export async function removePriest(id: number): Promise<ActionResult> {
   return runAction(async () => {
     await api.deletePriest(id);
-    revalidatePath("/admin/priests");
+    revalidatePath("/admin");
   });
 }
 
@@ -80,7 +80,7 @@ export async function createMyMass(
 ): Promise<ActionResult<MassSchedule>> {
   return runAction(async () => {
     const result = await api.createMassSchedule(requireParishId(), input);
-    revalidatePath("/admin/mass-schedules");
+    revalidatePath("/admin");
     return result;
   });
 }
@@ -91,7 +91,7 @@ export async function editMass(
 ): Promise<ActionResult<MassSchedule>> {
   return runAction(async () => {
     const result = await api.updateMassSchedule(id, input);
-    revalidatePath("/admin/mass-schedules");
+    revalidatePath("/admin");
     return result;
   });
 }
@@ -99,13 +99,18 @@ export async function editMass(
 export async function removeMass(id: number): Promise<ActionResult> {
   return runAction(async () => {
     await api.deleteMassSchedule(id);
-    revalidatePath("/admin/mass-schedules");
+    revalidatePath("/admin");
   });
 }
 
 // --- Articles -------------------------------------------------------------
 
 export async function listMyArticles(page = 0): Promise<ActionResult<Page<ArticleSummary>>> {
+  return runAction(() => api.listParishArticlesForAdmin(requireParishId(), page, 20));
+}
+
+/** Timeline feed: only PUBLISHED articles of the admin's own parish, newest first. */
+export async function listMyTimeline(page = 0): Promise<ActionResult<Page<ArticleSummary>>> {
   return runAction(() => api.listParishArticles(requireParishId(), page, 20));
 }
 

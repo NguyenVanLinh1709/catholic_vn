@@ -38,6 +38,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+                        // Admin article listing (incl. drafts) — must be authenticated;
+                        // declared before the public GET rule below so it is not opened up.
+                        .requestMatchers(HttpMethod.GET, "/api/parishes/*/articles/manage").authenticated()
                         // Public read API
                         .requestMatchers(HttpMethod.GET, "/api/parishes/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/priests/**").permitAll()

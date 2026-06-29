@@ -9,6 +9,7 @@ import { LoadingBlock, EmptyState } from "@/components/Feedback";
 import { useToast } from "@/components/Toast";
 import { uploadImage } from "@/lib/upload";
 import { useI18n } from "@/lib/i18n/provider";
+import { isValidPhone } from "@/lib/validation";
 import { priestRoleLabel } from "@/lib/i18n/labels";
 import type { Priest, PriestRole } from "@/lib/types";
 import type { PriestInput } from "@/lib/api";
@@ -16,7 +17,7 @@ import { listMyPriests, createMyPriest, editPriest, removePriest } from "../acti
 
 const EMPTY: PriestInput = { fullName: "", role: "PASTOR", phone: "", photoUrl: "", orderIndex: 0 };
 
-export default function AdminPriestsPage() {
+export function PriestsSection() {
   const toast = useToast();
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
@@ -80,6 +81,10 @@ export default function AdminPriestsPage() {
       toast.error(t("priests.nameRequired"));
       return;
     }
+    if (!isValidPhone(form.phone)) {
+      toast.error(t("validation.phoneInvalid"));
+      return;
+    }
     setSaving(true);
     const payload: PriestInput = {
       ...form,
@@ -112,9 +117,9 @@ export default function AdminPriestsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("priests.title")}</h1>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t("priests.title")}</h2>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
           {t("common.add")}
@@ -214,6 +219,9 @@ export default function AdminPriestsPage() {
             <Input
               value={form.phone ?? ""}
               onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+              inputMode="tel"
+              maxLength={10}
+              placeholder="0xxxxxxxxx"
             />
           </Field>
           <Field label={t("priests.fieldOrder")}>
@@ -253,6 +261,6 @@ export default function AdminPriestsPage() {
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}
       />
-    </div>
+    </section>
   );
 }

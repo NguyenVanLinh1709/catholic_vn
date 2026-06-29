@@ -6,8 +6,6 @@ import Link from "next/link";
 import { Church } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Field, Input, PasswordInput } from "@/components/Field";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { LanguageToggle } from "@/components/LanguageToggle";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/lib/i18n/provider";
 
@@ -50,11 +48,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="relative w-full max-w-sm space-y-6 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-8 shadow-sm">
-      <div className="absolute right-4 top-4 flex items-center gap-2">
-        <LanguageToggle />
-        <ThemeToggle />
-      </div>
+    <div className="w-full max-w-sm space-y-6 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-8 shadow-sm">
       <div className="flex flex-col items-center gap-2 text-center">
         <Church className="h-10 w-10 text-brand-600" />
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("login.title")}</h1>
@@ -98,7 +92,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 dark:bg-gray-950">
+    <div className="flex flex-1 items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950">
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>

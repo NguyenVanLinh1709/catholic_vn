@@ -31,6 +31,14 @@ public class ArticleController {
         return articleService.listPublishedByParish(parishId, pageable);
     }
 
+    /** Admin listing for a parish's managers: includes DRAFT articles. */
+    @GetMapping("/api/parishes/{parishId}/articles/manage")
+    public PageResponse<ArticleSummaryResponse> listByParishForManage(
+            @PathVariable Long parishId,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return articleService.listAllByParishForManage(parishId, pageable);
+    }
+
     @GetMapping("/api/articles/{id}")
     public ArticleResponse get(@PathVariable Long id) {
         return articleService.getReadable(id);

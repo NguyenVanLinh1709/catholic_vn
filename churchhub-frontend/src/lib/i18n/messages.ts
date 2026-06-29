@@ -48,6 +48,7 @@ const vi = {
   "nav.priests": "Linh mục",
   "nav.massSchedules": "Giờ lễ",
   "nav.articles": "Bài viết",
+  "nav.articlesManage": "Quản lý bài viết",
   "nav.parishes": "Nhà thờ",
   "nav.users": "Tài khoản quản trị",
 
@@ -136,6 +137,9 @@ const vi = {
   "parishInfo.loadErrorTitle": "Không tải được thông tin",
   "parishInfo.loadErrorDesc": "Tài khoản của bạn có thể chưa được gắn với giáo xứ nào.",
 
+  // Validation (shared)
+  "validation.phoneInvalid": "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0",
+
   // Priests (admin)
   "priests.title": "Linh mục",
   "priests.emptyTitle": "Chưa có linh mục",
@@ -179,8 +183,8 @@ const vi = {
   "articles.title": "Bài viết",
   "articles.create": "Tạo bài viết",
   "articles.draftNote":
-    "Lưu ý: danh sách này hiển thị các bài đã đăng. Bài nháp vẫn được lưu và có thể mở lại từ đường dẫn chỉnh sửa.",
-  "articles.emptyTitle": "Chưa có bài viết đã đăng",
+    "Lưu ý: danh sách này hiển thị cả bài đã đăng và bản nháp. Chỉ bài đã đăng mới hiển thị công khai.",
+  "articles.emptyTitle": "Chưa có bài viết",
   "articles.colTitle": "Tiêu đề",
   "articles.colStatus": "Trạng thái",
   "articles.colPublishedAt": "Ngày đăng",
@@ -190,6 +194,12 @@ const vi = {
   "articles.deleteTitle": "Xoá bài viết",
   "articles.deleteMessage": "Bạn chắc chắn muốn xoá “{title}”?",
   "articles.notFound": "Không tìm thấy bài viết",
+
+  // Article timeline (admin)
+  "feed.title": "Bài viết",
+  "feed.subtitle": "Dòng thời gian các bài viết đã đăng của giáo xứ.",
+  "feed.empty": "Chưa có bài viết nào được đăng.",
+  "feed.loadError": "Không tải được bài viết.",
 
   // Article editor
   "editor.editTitle": "Sửa bài viết",
@@ -345,6 +355,7 @@ const en: Record<MessageKey, string> = {
   "nav.priests": "Priests",
   "nav.massSchedules": "Mass schedules",
   "nav.articles": "Articles",
+  "nav.articlesManage": "Manage articles",
   "nav.parishes": "Parishes",
   "nav.users": "Admin accounts",
 
@@ -424,6 +435,8 @@ const en: Record<MessageKey, string> = {
   "parishInfo.loadErrorTitle": "Could not load information",
   "parishInfo.loadErrorDesc": "Your account may not be linked to any parish yet.",
 
+  "validation.phoneInvalid": "Phone number must be 10 digits and start with 0",
+
   "priests.title": "Priests",
   "priests.emptyTitle": "No priests yet",
   "priests.emptyDesc": "Add pastors and vicars to your parish.",
@@ -464,8 +477,8 @@ const en: Record<MessageKey, string> = {
   "articles.title": "Articles",
   "articles.create": "Create article",
   "articles.draftNote":
-    "Note: this list shows published articles. Drafts are still saved and can be reopened from their edit link.",
-  "articles.emptyTitle": "No published articles yet",
+    "Note: this list shows both published articles and drafts. Only published articles are visible publicly.",
+  "articles.emptyTitle": "No articles yet",
   "articles.colTitle": "Title",
   "articles.colStatus": "Status",
   "articles.colPublishedAt": "Published",
@@ -475,6 +488,11 @@ const en: Record<MessageKey, string> = {
   "articles.deleteTitle": "Delete article",
   "articles.deleteMessage": "Are you sure you want to delete “{title}”?",
   "articles.notFound": "Article not found",
+
+  "feed.title": "Articles",
+  "feed.subtitle": "Timeline of your parish's published articles.",
+  "feed.empty": "No articles have been published yet.",
+  "feed.loadError": "Could not load articles.",
 
   "editor.editTitle": "Edit article",
   "editor.createTitle": "Create article",

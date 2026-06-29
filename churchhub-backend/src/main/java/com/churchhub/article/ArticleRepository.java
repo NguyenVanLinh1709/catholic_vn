@@ -8,5 +8,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     Page<Article> findByParishIdAndStatus(Long parishId, ArticleStatus status, Pageable pageable);
 
+    Page<Article> findByParishId(Long parishId, Pageable pageable);
+
     boolean existsByParishIdAndSlug(Long parishId, String slug);
 }
