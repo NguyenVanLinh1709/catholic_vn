@@ -7,7 +7,7 @@ const nextConfig = {
     },
   },
   images: {
-    // Allow remote cover/photo URLs (e.g. Cloudinary) once wired up.
+    // Allows remote cover/photo URLs, incl. Vercel Blob storage.
     remotePatterns: [
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "localhost" },

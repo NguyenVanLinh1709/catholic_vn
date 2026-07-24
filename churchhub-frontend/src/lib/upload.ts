@@ -1,14 +1,11 @@
 "use client";
 
 /**
- * Uploads an image and returns a persistent, same-origin URL (e.g. /uploads/xxx.jpg).
+ * Uploads an image and returns a persistent URL (Vercel Blob storage).
  *
- * Posts to the Next.js route handler POST /api/upload, which stores the file under
- * public/uploads. The returned URL survives reloads and server-side rendering —
- * unlike a blob: object URL, which only lives in the uploading tab.
- *
- * To switch to a CDN (e.g. Cloudinary unsigned upload), replace the body with a
- * direct POST to the provider and return its secure_url.
+ * Posts to the Next.js route handler POST /api/upload, which stores the file in
+ * Vercel Blob and returns its public URL. Survives reloads and server-side
+ * rendering — unlike a blob: object URL, which only lives in the uploading tab.
  */
 export async function uploadImage(file: File): Promise<string> {
   const form = new FormData();
