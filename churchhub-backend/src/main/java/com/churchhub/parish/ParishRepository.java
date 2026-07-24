@@ -13,4 +13,8 @@ public interface ParishRepository extends JpaRepository<Parish, Long> {
     boolean existsBySlug(String slug);
 
     Page<Parish> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
+    Page<Parish> findByActiveTrue(Pageable pageable);
+
+    Page<Parish> findByNameContainingIgnoreCaseAndActiveTrue(String name, Pageable pageable);
 }

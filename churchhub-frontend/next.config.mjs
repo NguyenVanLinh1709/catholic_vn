@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+  },
   images: {
     // Allow remote cover/photo URLs (e.g. Cloudinary) once wired up.
     remotePatterns: [

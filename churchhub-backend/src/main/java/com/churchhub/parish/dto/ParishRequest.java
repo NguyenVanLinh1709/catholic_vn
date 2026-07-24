@@ -1,5 +1,6 @@
 package com.churchhub.parish.dto;
 
+import com.churchhub.common.ValidationPatterns;
 import com.churchhub.massschedule.dto.MassScheduleRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
@@ -14,7 +15,7 @@ import java.util.List;
 public record ParishRequest(
         @NotBlank @Size(max = 255) String name,
         @Size(max = 500) String address,
-        @Pattern(regexp = "^(0\\d{9})?$", message = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0")
+        @Pattern(regexp = ValidationPatterns.VN_PHONE_REGEX, message = ValidationPatterns.VN_PHONE_MESSAGE)
         String phone,
         @DecimalMin("-90.0") @DecimalMax("90.0") BigDecimal latitude,
         @DecimalMin("-180.0") @DecimalMax("180.0") BigDecimal longitude,

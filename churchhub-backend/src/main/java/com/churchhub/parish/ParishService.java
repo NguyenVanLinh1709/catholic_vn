@@ -1,5 +1,6 @@
 package com.churchhub.parish;
 
+import com.churchhub.common.BadRequestException;
 import com.churchhub.common.ConflictException;
 import com.churchhub.common.NotFoundException;
 import com.churchhub.common.PageResponse;
@@ -13,8 +14,11 @@ import com.churchhub.parish.dto.ParishRequest;
 import com.churchhub.parish.dto.ParishResponse;
 import com.churchhub.priest.PriestRepository;
 import com.churchhub.priest.dto.PriestResponse;
+import com.churchhub.security.AuthUser;
 import com.churchhub.security.ParishAccessGuard;
+import com.churchhub.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,18 +36,31 @@ public class ParishService {
     private final MassScheduleRepository massScheduleRepository;
     private final ParishAccessGuard parishAccess;
 
+    /** Public callers and PARISH_ADMIN only ever see active parishes; SUPER_ADMIN sees all. */
     @Transactional(readOnly = true)
     public PageResponse<ParishResponse> search(String name, Pageable pageable) {
-        Page<Parish> page = StringUtils.hasText(name)
-                ? parishRepository.findByNameContainingIgnoreCase(name.trim(), pageable)
-                : parishRepository.findAll(pageable);
+        boolean includeInactive = isSuperAdmin();
+        Page<Parish> page;
+        if (StringUtils.hasText(name)) {
+            page = includeInactive
+                    ? parishRepository.findByNameContainingIgnoreCase(name.trim(), pageable)
+                    : parishRepository.findByNameContainingIgnoreCaseAndActiveTrue(name.trim(), pageable);
+        } else {
+            page = includeInactive
+                    ? parishRepository.findAll(pageable)
+                    : parishRepository.findByActiveTrue(pageable);
+        }
         return PageResponse.from(page.map(ParishResponse::from));
     }
 
+    /** Inactive parishes are hidden from everyone except SUPER_ADMIN and the parish's own admins. */
     @Transactional(readOnly = true)
     public ParishDetailResponse getBySlug(String slug) {
         Parish parish = parishRepository.findBySlug(slug)
                 .orElseThrow(() -> NotFoundException.of("Parish", slug));
+        if (!parish.isActive() && !canManage(parish.getId())) {
+            throw NotFoundException.of("Parish", slug);
+        }
 
         List<PriestResponse> priests = priestRepository
                 .findByParishIdOrderByOrderIndexAscIdAsc(parish.getId()).stream()
@@ -71,7 +88,7 @@ public class ParishService {
                 .description(request.description())
                 .active(request.isActive() == null || request.isActive())
                 .build();
-        Parish saved = parishRepository.save(parish);
+        Parish saved = saveParish(parish);
 
         List<MassScheduleResponse> schedules = saveSchedules(saved.getId(), request.massSchedules());
         return ParishDetailResponse.of(saved, List.of(), schedules);
@@ -102,6 +119,11 @@ public class ParishService {
         Parish parish = getParish(id);
         // SUPER_ADMIN passes; PARISH_ADMIN only for their own parish.
         parishAccess.assertCanManage(id);
+        if (request.massSchedules() != null && !request.massSchedules().isEmpty()) {
+            throw new BadRequestException(
+                    "massSchedules can only be set when creating a parish; "
+                            + "use the /mass-schedules endpoints to manage them afterwards");
+        }
 
         String base = resolveBaseSlug(request);
         if (!base.equals(parish.getSlug())) {
@@ -116,7 +138,30 @@ public class ParishService {
         if (request.isActive() != null) {
             parish.setActive(request.isActive());
         }
-        return ParishResponse.from(parishRepository.save(parish));
+        return ParishResponse.from(saveParish(parish));
+    }
+
+    /**
+     * Slug uniqueness is pre-checked, but a concurrent create/update can still race past it —
+     * that's overwhelmingly the realistic cause here, though in principle any constraint on
+     * this table would also surface as a DataIntegrityViolationException.
+     */
+    private Parish saveParish(Parish parish) {
+        try {
+            return parishRepository.save(parish);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException("Parish slug already in use, please retry");
+        }
+    }
+
+    private boolean isSuperAdmin() {
+        return SecurityUtils.currentUser().map(AuthUser::isSuperAdmin).orElse(false);
+    }
+
+    private boolean canManage(Long parishId) {
+        return SecurityUtils.currentUser()
+                .map(user -> parishAccess.canManage(parishId, user))
+                .orElse(false);
     }
 
     @Transactional

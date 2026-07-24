@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 public record ArticleRequest(
         @NotBlank @Size(max = 255) String title,
         @Size(max = 255) String slug,
-        String content,
+        @Size(max = 200_000) String content,
         @Size(max = 500) String coverUrl,
         ArticleStatus status
 ) {

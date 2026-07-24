@@ -41,7 +41,7 @@ public class RestAuthEntryPoint implements AuthenticationEntryPoint, AccessDenie
 
     private void write(HttpServletRequest request, HttpServletResponse response,
                        HttpStatus status, String message) throws IOException {
-        ApiError body = ApiError.of(status.value(), status.getReasonPhrase(), message, request.getRequestURI());
+        ApiError body = ApiError.of(status, message, request.getRequestURI());
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(response.getWriter(), body);

@@ -3,6 +3,7 @@ package com.churchhub.article;
 import com.churchhub.article.dto.ArticleRequest;
 import com.churchhub.article.dto.ArticleResponse;
 import com.churchhub.article.dto.ArticleSummaryResponse;
+import com.churchhub.common.ConflictException;
 import com.churchhub.common.NotFoundException;
 import com.churchhub.common.PageResponse;
 import com.churchhub.common.SlugUtil;
@@ -11,6 +12,9 @@ import com.churchhub.security.AuthUser;
 import com.churchhub.security.ParishAccessGuard;
 import com.churchhub.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,12 +73,12 @@ public class ArticleService {
                 .authorId(SecurityUtils.requireCurrentUser().getId())
                 .title(request.title())
                 .slug(slug)
-                .content(request.content())
+                .content(sanitizeContent(request.content()))
                 .coverUrl(request.coverUrl())
                 .status(status)
                 .publishedAt(status == ArticleStatus.PUBLISHED ? OffsetDateTime.now() : null)
                 .build();
-        return ArticleResponse.from(articleRepository.save(article));
+        return ArticleResponse.from(saveArticle(article));
     }
 
     @Transactional
@@ -86,7 +90,7 @@ public class ArticleService {
 
         article.setTitle(request.title());
         article.setSlug(resolveSlug(article.getParishId(), request.slug(), request.title(), article));
-        article.setContent(request.content());
+        article.setContent(sanitizeContent(request.content()));
         article.setCoverUrl(request.coverUrl());
 
         // First transition into PUBLISHED stamps published_at once.
@@ -95,7 +99,25 @@ public class ArticleService {
         }
         article.setStatus(newStatus);
 
-        return ArticleResponse.from(articleRepository.save(article));
+        return ArticleResponse.from(saveArticle(article));
+    }
+
+    /** Strips script/style tags and event-handler attributes; keeps common formatting markup. */
+    private String sanitizeContent(String content) {
+        return content == null ? null : Jsoup.clean(content, Safelist.relaxed());
+    }
+
+    /**
+     * Slug uniqueness is pre-checked, but a concurrent create/update can still race past it —
+     * that's overwhelmingly the realistic cause here, though in principle any constraint on
+     * this table would also surface as a DataIntegrityViolationException.
+     */
+    private Article saveArticle(Article article) {
+        try {
+            return articleRepository.save(article);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException("Article slug already in use for this parish, please retry");
+        }
     }
 
     @Transactional

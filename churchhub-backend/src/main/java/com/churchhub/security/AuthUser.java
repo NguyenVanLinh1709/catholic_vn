@@ -23,14 +23,17 @@ public class AuthUser implements UserDetails {
     private final Role role;
     private final Long parishId;
     private final boolean enabled;
+    private final int tokenVersion;
 
-    public AuthUser(Long id, String email, String passwordHash, Role role, Long parishId, boolean enabled) {
+    public AuthUser(Long id, String email, String passwordHash, Role role, Long parishId, boolean enabled,
+                     int tokenVersion) {
         this.id = id;
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
         this.parishId = parishId;
         this.enabled = enabled;
+        this.tokenVersion = tokenVersion;
     }
 
     public static AuthUser from(User user) {
@@ -40,7 +43,8 @@ public class AuthUser implements UserDetails {
                 user.getPasswordHash(),
                 user.getRole(),
                 user.getParishId(),
-                user.isEnabled());
+                user.isEnabled(),
+                user.getTokenVersion());
     }
 
     public boolean isSuperAdmin() {

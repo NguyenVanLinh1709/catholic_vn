@@ -6,6 +6,7 @@ import com.churchhub.user.dto.UpdateUserRequest;
 import com.churchhub.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public PageResponse<UserResponse> list(@PageableDefault(size = 20) Pageable pageable) {
+    public PageResponse<UserResponse> list(@ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return userService.list(pageable);
     }
 

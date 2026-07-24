@@ -5,10 +5,13 @@ import com.churchhub.common.ConflictException;
 import com.churchhub.common.NotFoundException;
 import com.churchhub.common.PageResponse;
 import com.churchhub.parish.ParishRepository;
+import com.churchhub.security.AuthUser;
+import com.churchhub.security.SecurityUtils;
 import com.churchhub.user.dto.CreateUserRequest;
 import com.churchhub.user.dto.UpdateUserRequest;
 import com.churchhub.user.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,6 +20,9 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,17 +58,27 @@ public class UserService {
                 .parishId(parishId)
                 .enabled(true)
                 .build();
-        return UserResponse.from(userRepository.save(user));
+        try {
+            return UserResponse.from(userRepository.save(user));
+        } catch (DataIntegrityViolationException ex) {
+            // existsByEmail above already ruled out the common case; this only fires on a
+            // concurrent insert racing past that check, so email is overwhelmingly the cause.
+            throw new ConflictException("Email already in use: " + request.email());
+        }
     }
 
     @Transactional
     public UserResponse update(Long id, UpdateUserRequest request) {
         User user = getUser(id);
+        boolean isSelf = isCurrentUser(id);
 
         if (StringUtils.hasText(request.fullName())) {
             user.setFullName(request.fullName());
         }
         Role role = request.role() != null ? request.role() : user.getRole();
+        if (isSelf && role != user.getRole()) {
+            throw new ConflictException("You cannot change your own role");
+        }
         assertSingleSuperAdmin(role, user.getId());
         Long parishId = request.role() != null || request.parishId() != null
                 ? normalizeParish(role, request.parishId() != null ? request.parishId() : user.getParishId())
@@ -71,6 +87,9 @@ public class UserService {
         user.setParishId(parishId);
 
         if (request.enabled() != null) {
+            if (isSelf && !request.enabled()) {
+                throw new ConflictException("You cannot disable your own account");
+            }
             user.setEnabled(request.enabled());
         }
         if (StringUtils.hasText(request.password())) {
@@ -82,7 +101,17 @@ public class UserService {
     @Transactional
     public void delete(Long id) {
         User user = getUser(id);
+        if (isCurrentUser(id)) {
+            throw new ConflictException("You cannot delete your own account");
+        }
+        if (user.getRole() == Role.SUPER_ADMIN) {
+            throw new ConflictException("The SUPER_ADMIN account cannot be deleted");
+        }
         userRepository.delete(user);
+    }
+
+    private boolean isCurrentUser(Long id) {
+        return SecurityUtils.currentUser().map(AuthUser::getId).map(id::equals).orElse(false);
     }
 
     private User getUser(Long id) {
@@ -145,9 +174,14 @@ public class UserService {
         }
         List<Long> desired = userIds == null ? List.of() : userIds.stream().distinct().toList();
 
+        Map<Long, User> byId = userRepository.findAllById(desired).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
         List<User> desiredUsers = new ArrayList<>();
         for (Long id : desired) {
-            User user = getUser(id);
+            User user = byId.get(id);
+            if (user == null) {
+                throw NotFoundException.of("User", id);
+            }
             if (user.getRole() != Role.PARISH_ADMIN) {
                 throw new BadRequestException("User " + id + " is not a PARISH_ADMIN");
             }

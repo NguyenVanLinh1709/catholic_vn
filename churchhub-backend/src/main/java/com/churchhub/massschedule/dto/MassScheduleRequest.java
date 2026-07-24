@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalTime;
 
+@ConsistentDayOfWeek
 public record MassScheduleRequest(
         @NotNull DayType dayType,
         @Min(1) @Max(7) Short dayOfWeek,

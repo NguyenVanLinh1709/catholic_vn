@@ -47,4 +47,8 @@ public class User extends BaseEntity {
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled = true;
+
+    /** Bumped on logout to invalidate every access/refresh token issued before that point. */
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion = 0;
 }

@@ -6,6 +6,7 @@ import com.churchhub.article.dto.ArticleSummaryResponse;
 import com.churchhub.common.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,7 @@ public class ArticleController {
     @GetMapping("/api/parishes/{parishId}/articles")
     public PageResponse<ArticleSummaryResponse> listByParish(
             @PathVariable Long parishId,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable) {
         return articleService.listPublishedByParish(parishId, pageable);
     }
 
@@ -35,7 +36,7 @@ public class ArticleController {
     @GetMapping("/api/parishes/{parishId}/articles/manage")
     public PageResponse<ArticleSummaryResponse> listByParishForManage(
             @PathVariable Long parishId,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable) {
         return articleService.listAllByParishForManage(parishId, pageable);
     }
 

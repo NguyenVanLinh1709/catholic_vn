@@ -9,6 +9,7 @@ import com.churchhub.user.UserService;
 import com.churchhub.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ public class ParishController {
     @GetMapping
     public PageResponse<ParishResponse> search(
             @RequestParam(required = false) String name,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return parishService.search(name, pageable);
     }
 

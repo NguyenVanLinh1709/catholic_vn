@@ -36,8 +36,15 @@ public class SecurityConfig {
                         .authenticationEntryPoint(restAuthEntryPoint)
                         .accessDeniedHandler(restAuthEntryPoint))
                 .authorizeHttpRequests(auth -> auth
+                        // Logout needs the caller's identity to bump their token version;
+                        // declared before the permitAll rule below so it is not opened up.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         // Auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+                        // Self-service admin sign-up submission is public; listing/approving/
+                        // rejecting registrations (same base path) requires SUPER_ADMIN and is
+                        // left to @PreAuthorize + the default anyRequest().authenticated() below.
+                        .requestMatchers(HttpMethod.POST, "/api/registrations").permitAll()
                         // Admin article listing (incl. drafts) — must be authenticated;
                         // declared before the public GET rule below so it is not opened up.
                         .requestMatchers(HttpMethod.GET, "/api/parishes/*/articles/manage").authenticated()
