@@ -135,8 +135,8 @@ export function PriestsSection() {
           action={<Button onClick={openCreate}>{t("priests.emptyAction")}</Button>}
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
               <tr>
                 <th className="px-4 py-3">{t("priests.colName")}</th>

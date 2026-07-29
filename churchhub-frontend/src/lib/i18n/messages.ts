@@ -56,6 +56,9 @@ const vi = {
   "shell.logout": "Đăng xuất",
   "shell.noAccessTitle": "Không có quyền truy cập",
   "shell.noAccessDesc": "Tài khoản của bạn không được phép vào khu vực này.",
+  "shell.menu": "Menu",
+  "shell.openNav": "Mở menu điều hướng",
+  "shell.closeNav": "Đóng menu điều hướng",
   "header.admin": "Quản trị",
   "header.login": "Đăng nhập",
   "footer.copyright": "© {year} ChurchHub — Tổng hợp thông tin giáo xứ.",
@@ -292,6 +295,18 @@ const vi = {
   "home.emptyTitle": "Không tìm thấy nhà thờ nào",
   "home.emptySearch": "Không có kết quả cho “{query}”. Thử từ khoá khác.",
   "home.emptyNoData": "Hiện chưa có dữ liệu nhà thờ.",
+  "home.emptyFilter": "Không có giáo xứ nào có giờ lễ khớp với bộ lọc đã chọn.",
+
+  // Mass time filter (home page)
+  "filter.dayTypeAria": "Lọc theo loại lễ",
+  "filter.dayTypeAll": "Tất cả loại lễ",
+  "filter.dayOfWeekAria": "Lọc theo thứ trong tuần",
+  "filter.dayOfWeekAll": "Tất cả các thứ",
+  "filter.timeAria": "Lọc theo khung giờ",
+  "filter.timeAll": "Tất cả khung giờ",
+  "filter.timeMorning": "Buổi sáng (trước 12:00)",
+  "filter.timeAfternoon": "Buổi chiều (12:00–18:00)",
+  "filter.timeEvening": "Buổi tối (sau 18:00)",
 
   // Public parish detail
   "parishDetail.home": "Trang chủ",
@@ -362,6 +377,9 @@ const en: Record<MessageKey, string> = {
   "shell.logout": "Sign out",
   "shell.noAccessTitle": "Access denied",
   "shell.noAccessDesc": "Your account is not allowed in this area.",
+  "shell.menu": "Menu",
+  "shell.openNav": "Open navigation menu",
+  "shell.closeNav": "Close navigation menu",
   "header.admin": "Admin",
   "header.login": "Sign in",
   "footer.copyright": "© {year} ChurchHub — Parish information hub.",
@@ -581,6 +599,18 @@ const en: Record<MessageKey, string> = {
   "home.emptyTitle": "No parishes found",
   "home.emptySearch": "No results for “{query}”. Try another keyword.",
   "home.emptyNoData": "No parish data available yet.",
+  "home.emptyFilter": "No parish has a mass time matching the selected filter.",
+
+  // Mass time filter (home page)
+  "filter.dayTypeAria": "Filter by mass day type",
+  "filter.dayTypeAll": "All day types",
+  "filter.dayOfWeekAria": "Filter by day of week",
+  "filter.dayOfWeekAll": "All days",
+  "filter.timeAria": "Filter by time of day",
+  "filter.timeAll": "All times",
+  "filter.timeMorning": "Morning (before 12:00)",
+  "filter.timeAfternoon": "Afternoon (12:00–18:00)",
+  "filter.timeEvening": "Evening (after 18:00)",
 
   "parishDetail.home": "Home",
   "parishDetail.priests": "Priests",

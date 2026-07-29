@@ -1,6 +1,8 @@
 package com.churchhub.parish;
 
 import com.churchhub.common.PageResponse;
+import com.churchhub.massschedule.DayType;
+import com.churchhub.massschedule.MassTimeRange;
 import com.churchhub.parish.dto.ParishDetailResponse;
 import com.churchhub.parish.dto.ParishRequest;
 import com.churchhub.parish.dto.ParishResponse;
@@ -38,8 +40,11 @@ public class ParishController {
     @GetMapping
     public PageResponse<ParishResponse> search(
             @RequestParam(required = false) String name,
+            @RequestParam(required = false) DayType dayType,
+            @RequestParam(required = false) Short dayOfWeek,
+            @RequestParam(required = false) MassTimeRange time,
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
-        return parishService.search(name, pageable);
+        return parishService.search(name, dayType, dayOfWeek, time, pageable);
     }
 
     @GetMapping("/{slug}")

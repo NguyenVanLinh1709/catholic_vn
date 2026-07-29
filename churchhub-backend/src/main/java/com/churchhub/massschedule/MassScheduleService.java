@@ -23,7 +23,7 @@ public class MassScheduleService {
     public List<MassScheduleResponse> listByParish(Long parishId) {
         requireParish(parishId);
         return massScheduleRepository
-                .findByParishIdOrderByDayTypeAscDayOfWeekAscMassTimeAsc(parishId).stream()
+                .findByParishIdOrdered(parishId).stream()
                 .map(MassScheduleResponse::from)
                 .toList();
     }

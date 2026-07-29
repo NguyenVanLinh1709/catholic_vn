@@ -5,8 +5,10 @@ import com.churchhub.common.ConflictException;
 import com.churchhub.common.NotFoundException;
 import com.churchhub.common.PageResponse;
 import com.churchhub.common.SlugUtil;
+import com.churchhub.massschedule.DayType;
 import com.churchhub.massschedule.MassSchedule;
 import com.churchhub.massschedule.MassScheduleRepository;
+import com.churchhub.massschedule.MassTimeRange;
 import com.churchhub.massschedule.dto.MassScheduleRequest;
 import com.churchhub.massschedule.dto.MassScheduleResponse;
 import com.churchhub.parish.dto.ParishDetailResponse;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -36,20 +39,27 @@ public class ParishService {
     private final MassScheduleRepository massScheduleRepository;
     private final ParishAccessGuard parishAccess;
 
-    /** Public callers and PARISH_ADMIN only ever see active parishes; SUPER_ADMIN sees all. */
+    /**
+     * Public callers and PARISH_ADMIN only ever see active parishes; SUPER_ADMIN sees all.
+     * dayType / dayOfWeek / time are an optional mass-schedule filter: when any is supplied,
+     * only parishes with at least one matching mass schedule are returned (filtered in the DB,
+     * not fetched-then-filtered in memory).
+     */
     @Transactional(readOnly = true)
-    public PageResponse<ParishResponse> search(String name, Pageable pageable) {
-        boolean includeInactive = isSuperAdmin();
-        Page<Parish> page;
-        if (StringUtils.hasText(name)) {
-            page = includeInactive
-                    ? parishRepository.findByNameContainingIgnoreCase(name.trim(), pageable)
-                    : parishRepository.findByNameContainingIgnoreCaseAndActiveTrue(name.trim(), pageable);
-        } else {
-            page = includeInactive
-                    ? parishRepository.findAll(pageable)
-                    : parishRepository.findByActiveTrue(pageable);
+    public PageResponse<ParishResponse> search(
+            String name, DayType dayType, Short dayOfWeek, MassTimeRange time, Pageable pageable) {
+        if (dayOfWeek != null && (dayOfWeek < 1 || dayOfWeek > 7)) {
+            throw new BadRequestException("dayOfWeek must be between 1 (Monday) and 7 (Sunday)");
         }
+        boolean includeInactive = isSuperAdmin();
+        String trimmedName = StringUtils.hasText(name) ? name.trim() : null;
+        LocalTime startTime = time != null ? time.start() : null;
+        LocalTime endTime = time != null ? time.end() : null;
+        boolean hasMassFilter = dayType != null || dayOfWeek != null || time != null;
+        Page<Parish> page = parishRepository.search(
+                trimmedName, !includeInactive, hasMassFilter,
+                dayType, dayOfWeek != null, dayOfWeek,
+                startTime != null, startTime, endTime != null, endTime, pageable);
         return PageResponse.from(page.map(ParishResponse::from));
     }
 
@@ -67,7 +77,7 @@ public class ParishService {
                 .map(PriestResponse::from)
                 .toList();
         List<MassScheduleResponse> schedules = massScheduleRepository
-                .findByParishIdOrderByDayTypeAscDayOfWeekAscMassTimeAsc(parish.getId()).stream()
+                .findByParishIdOrdered(parish.getId()).stream()
                 .map(MassScheduleResponse::from)
                 .toList();
 

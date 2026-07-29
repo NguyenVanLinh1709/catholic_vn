@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, MapPin, Phone } from "lucide-react";
 import { listParishes, listMassSchedules, ApiError } from "@/lib/api";
-import type { MassSchedule, Parish } from "@/lib/types";
-import { formatTime, groupMassSchedules } from "@/lib/format";
+import type { DayType, MassSchedule, Parish } from "@/lib/types";
+import { formatTime, groupMassSchedules, type MassTimeRange } from "@/lib/format";
 import { dayTypeLabel } from "@/lib/i18n/labels";
 import type { TranslateFn } from "@/lib/i18n/messages";
-import { SearchBar, QueryPagination } from "@/components/QueryControls";
+import { SearchBar, MassFilter, QueryPagination } from "@/components/QueryControls";
 import { EmptyState } from "@/components/Feedback";
 import { getTranslations } from "@/lib/i18n/server";
 import { parishListJsonLd } from "@/lib/seo";
@@ -14,10 +14,18 @@ import { absoluteUrl } from "@/lib/site";
 
 const PAGE_SIZE = 12;
 
+interface HomeSearchParams {
+  search?: string;
+  page?: string;
+  dayType?: string;
+  dayOfWeek?: string;
+  time?: string;
+}
+
 export function generateMetadata({
   searchParams,
 }: {
-  searchParams: { search?: string; page?: string };
+  searchParams: HomeSearchParams;
 }): Metadata {
   const { t } = getTranslations();
   const search = searchParams.search?.trim();
@@ -30,22 +38,44 @@ export function generateMetadata({
 
   return {
     description,
-    // Search-result pages are thin/duplicate — keep them out of the index but
-    // let crawlers follow through to the parish pages.
-    ...(search ? { robots: { index: false, follow: true } } : {}),
+    // Search/filter result pages are thin/duplicate — keep them out of the
+    // index but let crawlers follow through to the parish pages.
+    ...(search || searchParams.dayType || searchParams.dayOfWeek || searchParams.time
+      ? { robots: { index: false, follow: true } }
+      : {}),
     alternates: { canonical },
     openGraph: { url: canonical, description },
   };
 }
 
+const VALID_DAY_TYPES: DayType[] = ["WEEKDAY", "SUNDAY", "SPECIAL"];
+const VALID_TIME_RANGES: MassTimeRange[] = ["MORNING", "AFTERNOON", "EVENING"];
+
+function parseDayType(value: string | undefined): DayType | undefined {
+  return VALID_DAY_TYPES.includes(value as DayType) ? (value as DayType) : undefined;
+}
+
+function parseTimeRange(value: string | undefined): MassTimeRange | undefined {
+  return VALID_TIME_RANGES.includes(value as MassTimeRange) ? (value as MassTimeRange) : undefined;
+}
+
+function parseDayOfWeek(value: string | undefined): number | undefined {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 && n <= 7 ? n : undefined;
+}
+
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { search?: string; page?: string };
+  searchParams: HomeSearchParams;
 }) {
   const { t } = getTranslations();
   const search = searchParams.search?.trim() || undefined;
   const page = Number(searchParams.page ?? "0") || 0;
+  const dayType = parseDayType(searchParams.dayType);
+  const dayOfWeek = parseDayOfWeek(searchParams.dayOfWeek);
+  const time = parseTimeRange(searchParams.time);
+  const hasMassFilter = Boolean(dayType || dayOfWeek || time);
 
   let parishes: Parish[] = [];
   let massByParish: Record<number, MassSchedule[]> = {};
@@ -54,13 +84,15 @@ export default async function HomePage({
   let loadError: string | null = null;
 
   try {
-    const result = await listParishes({ search, page, size: PAGE_SIZE });
+    // The mass-schedule filter (dayType/dayOfWeek/time) is applied server-side,
+    // so the directory list here is already the correctly filtered + paginated page.
+    const result = await listParishes({ search, dayType, dayOfWeek, time, page, size: PAGE_SIZE });
     parishes = result.content;
     totalPages = result.totalPages;
     totalElements = result.totalElements;
 
-    // Fetch each parish's mass schedules in parallel; a single parish failing
-    // shouldn't blank out the whole list, so swallow per-parish errors.
+    // Fetch each visible parish's mass schedules in parallel, for display only;
+    // a single parish failing shouldn't blank out the whole list.
     const massLists = await Promise.all(
       parishes.map((p) => listMassSchedules(p.id).catch(() => [] as MassSchedule[])),
     );
@@ -87,7 +119,10 @@ export default async function HomePage({
         </p>
       </section>
 
-      <SearchBar />
+      <div className="space-y-3">
+        <SearchBar />
+        <MassFilter />
+      </div>
 
       {loadError ? (
         <EmptyState title={t("home.errorTitle")} description={loadError} />
@@ -95,7 +130,11 @@ export default async function HomePage({
         <EmptyState
           title={t("home.emptyTitle")}
           description={
-            search ? t("home.emptySearch", { query: search }) : t("home.emptyNoData")
+            hasMassFilter
+              ? t("home.emptyFilter")
+              : search
+                ? t("home.emptySearch", { query: search })
+                : t("home.emptyNoData")
           }
         />
       ) : (
@@ -133,30 +172,32 @@ function ParishCard({
       href={`/parishes/${parish.slug}`}
       className="group flex h-full flex-col rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-5 shadow-sm transition hover:border-brand-300 hover:shadow-md dark:hover:border-brand-700"
     >
-      <h2 className="text-base font-semibold text-gray-900 group-hover:text-brand-700 dark:text-gray-100 dark:group-hover:text-brand-400">
-        {parish.name}
-      </h2>
-      {parish.address && (
-        <p className="mt-2 flex items-start gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
-          <span className="line-clamp-2">{parish.address}</span>
-        </p>
-      )}
-      {parish.phone && (
-        <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-          <Phone className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
-          {parish.phone}
-        </p>
-      )}
-      {parish.description && (
-        <p className="mt-3 line-clamp-3 text-sm text-gray-500 dark:text-gray-400">{parish.description}</p>
-      )}
-      {massGroups.length > 0 && (
-        <div className="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
-          <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            <Clock className="h-3.5 w-3.5 text-brand-500" />
-            {t("parishDetail.mass")}
+      <div className="h-[128px] overflow-hidden">
+        <h2 className="line-clamp-1 text-base font-semibold text-gray-900 group-hover:text-brand-700 dark:text-gray-100 dark:group-hover:text-brand-400">
+          {parish.name}
+        </h2>
+        {parish.address && (
+          <p className="mt-2 flex items-start gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
+            <span className="line-clamp-1">{parish.address}</span>
           </p>
+        )}
+        {parish.phone && (
+          <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+            <Phone className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
+            <span className="min-w-0 truncate">{parish.phone}</span>
+          </p>
+        )}
+        {parish.description && (
+          <p className="mt-2 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">{parish.description}</p>
+        )}
+      </div>
+      <div className="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
+        <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <Clock className="h-3.5 w-3.5 text-brand-500" />
+          {t("parishDetail.mass")}
+        </p>
+        {massGroups.length > 0 ? (
           <ul className="space-y-0.5 text-sm text-gray-600 dark:text-gray-400">
             {massGroups.map((group) => (
               <li key={group.dayType} className="flex gap-2">
@@ -169,8 +210,10 @@ function ParishCard({
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-gray-400 dark:text-gray-600">{t("parishDetail.massEmpty")}</p>
+        )}
+      </div>
     </Link>
   );
 }

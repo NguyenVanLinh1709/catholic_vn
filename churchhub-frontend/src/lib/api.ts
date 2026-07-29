@@ -9,6 +9,7 @@ import {
 } from "./cookies";
 import { getLocale } from "./i18n/server";
 import { translate } from "./i18n/messages";
+import type { MassTimeRange } from "./format";
 import type {
   AdminUser,
   Article,
@@ -194,9 +195,16 @@ export function listParishes(params: {
   search?: string;
   page?: number;
   size?: number;
+  /** Mass-schedule filter (all optional, ANDed): only parishes with a matching mass are returned. */
+  dayType?: DayType;
+  dayOfWeek?: number;
+  time?: MassTimeRange;
 }): Promise<Page<Parish>> {
   const qs = new URLSearchParams();
   if (params.search) qs.set("name", params.search);
+  if (params.dayType) qs.set("dayType", params.dayType);
+  if (params.dayOfWeek) qs.set("dayOfWeek", String(params.dayOfWeek));
+  if (params.time) qs.set("time", params.time);
   qs.set("page", String(params.page ?? 0));
   qs.set("size", String(params.size ?? 12));
   return apiFetch<Page<Parish>>(`/api/parishes?${qs.toString()}`, { revalidate: 30 });

@@ -1,9 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getArticle, getParishDetail, listParishArticles, ApiError } from "@/lib/api";
+import type { Parish } from "@/lib/types";
 import { formatDate } from "@/lib/format";
 import { getTranslations } from "@/lib/i18n/server";
+import { articleJsonLd, excerpt } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/site";
 
 async function resolveArticleId(slug: string, articleSlug: string) {
   const { parish } = await getParishDetail(slug);
@@ -19,13 +23,32 @@ export async function generateMetadata({
   params: { slug: string; articleSlug: string };
 }): Promise<Metadata> {
   const { t } = getTranslations();
+  const canonical = absoluteUrl(`/parishes/${params.slug}/articles/${params.articleSlug}`);
   try {
     const { articleId } = await resolveArticleId(params.slug, params.articleSlug);
-    if (!articleId) return { title: t("articleDetail.fallbackTitle") };
+    if (!articleId) return { title: t("articleDetail.fallbackTitle"), alternates: { canonical } };
     const article = await getArticle(articleId);
-    return { title: article.title };
+    const description = article.content ? excerpt(article.content) : undefined;
+    return {
+      title: article.title,
+      description,
+      alternates: { canonical },
+      openGraph: {
+        type: "article",
+        url: canonical,
+        title: article.title,
+        description,
+        ...(article.publishedAt ? { publishedTime: article.publishedAt } : {}),
+        ...(article.coverUrl ? { images: [article.coverUrl] } : {}),
+      },
+      twitter: {
+        title: article.title,
+        description,
+        ...(article.coverUrl ? { card: "summary_large_image", images: [article.coverUrl] } : {}),
+      },
+    };
   } catch {
-    return { title: t("articleDetail.fallbackTitle") };
+    return { title: t("articleDetail.fallbackTitle"), alternates: { canonical } };
   }
 }
 
@@ -35,21 +58,19 @@ export default async function ArticleDetailPage({
   params: { slug: string; articleSlug: string };
 }) {
   const { t, locale } = getTranslations();
-  let parishName = "";
-  let parishSlug = params.slug;
+  let parish: Parish | null = null;
   let articleId: number | null = null;
 
   try {
     const resolved = await resolveArticleId(params.slug, params.articleSlug);
-    parishName = resolved.parish.name;
-    parishSlug = resolved.parish.slug;
+    parish = resolved.parish;
     articleId = resolved.articleId;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
   }
 
-  if (!articleId) notFound();
+  if (!parish || !articleId) notFound();
 
   let article;
   try {
@@ -61,13 +82,17 @@ export default async function ArticleDetailPage({
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd(article, parish)) }}
+      />
       <nav className="text-sm text-gray-500 dark:text-gray-400">
         <Link href="/" className="hover:text-brand-700">
           {t("articleDetail.home")}
         </Link>
         <span className="mx-2">/</span>
-        <Link href={`/parishes/${parishSlug}`} className="hover:text-brand-700">
-          {parishName}
+        <Link href={`/parishes/${parish.slug}`} className="hover:text-brand-700">
+          {parish.name}
         </Link>
         <span className="mx-2">/</span>
         <span className="text-gray-700 dark:text-gray-300">{t("articleDetail.crumb")}</span>
@@ -81,12 +106,16 @@ export default async function ArticleDetailPage({
       </header>
 
       {article.coverUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={article.coverUrl}
-          alt={article.title}
-          className="w-full rounded-xl object-cover"
-        />
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl">
+          <Image
+            src={article.coverUrl}
+            alt={article.title}
+            fill
+            sizes="(min-width: 768px) 768px, 100vw"
+            className="object-cover"
+            priority
+          />
+        </div>
       )}
 
       {article.content && <div className="prose-content text-base">{article.content}</div>}

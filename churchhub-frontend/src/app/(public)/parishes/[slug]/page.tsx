@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Church, Clock, MapPin, Phone, User } from "lucide-react";
@@ -8,18 +9,28 @@ import { formatTime, groupMassSchedules } from "@/lib/format";
 import { getTranslations } from "@/lib/i18n/server";
 import { dayTypeLabel, priestRoleLabel, dayOfWeekLabel, relativeTime } from "@/lib/i18n/labels";
 import { EmptyState } from "@/components/Feedback";
+import { parishJsonLd } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/site";
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
+  const canonical = absoluteUrl(`/parishes/${params.slug}`);
   try {
     const { parish } = await getParishDetail(params.slug);
-    return { title: parish.name, description: parish.description ?? undefined };
+    const description = parish.description ?? undefined;
+    return {
+      title: parish.name,
+      description,
+      alternates: { canonical },
+      openGraph: { type: "website", url: canonical, title: parish.name, description },
+      twitter: { title: parish.name, description },
+    };
   } catch {
     const { t } = getTranslations();
-    return { title: t("parishDetail.fallbackTitle") };
+    return { title: t("parishDetail.fallbackTitle"), alternates: { canonical } };
   }
 }
 
@@ -50,6 +61,10 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
 
   return (
     <div className="space-y-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(parishJsonLd(parish, massSchedules)) }}
+      />
       <nav className="text-sm text-gray-500 dark:text-gray-400">
         <Link href="/" className="hover:text-brand-700 dark:hover:text-brand-400">
           {t("parishDetail.home")}
@@ -90,10 +105,11 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
                 className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-4"
               >
                 {priest.photoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={priest.photoUrl}
                     alt={priest.fullName}
+                    width={64}
+                    height={64}
                     className="h-16 w-16 rounded-full object-cover"
                   />
                 ) : (
@@ -187,12 +203,13 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
 
                   {/* Ảnh bìa */}
                   {article.coverUrl && (
-                    <Link href={href} className="block">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                    <Link href={href} className="relative block h-[28rem] w-full">
+                      <Image
                         src={article.coverUrl}
                         alt={article.title}
-                        className="max-h-[28rem] w-full object-cover"
+                        fill
+                        sizes="(min-width: 640px) 576px, 100vw"
+                        className="object-cover"
                       />
                     </Link>
                   )}

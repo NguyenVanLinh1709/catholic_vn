@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -10,6 +11,8 @@ import {
   Building2,
   LogOut,
   ShieldAlert,
+  Menu,
+  X,
 } from "lucide-react";
 import type { SessionUser } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -53,6 +56,7 @@ export function AdminShell({
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useI18n();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Client-side role guard (defence in depth alongside middleware).
   if (!isAllowed(section, user)) {
@@ -83,37 +87,84 @@ export function AdminShell({
     .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
+  const navLinks = (onNavigate?: () => void) => (
+    <nav className="flex-1 space-y-1 p-3">
+      {items.map((item) => {
+        const active = item.href === activeHref;
+        const Icon = item.icon;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+              active
+                ? "bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
+                : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800",
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            {t(item.labelKey)}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
+  const accountFooter = (
+    <div className="border-t border-gray-100 p-3 dark:border-gray-800">
+      <p className="truncate px-3 pb-2 text-xs text-gray-400 dark:text-gray-500">{user.email}</p>
+      <Button variant="secondary" size="sm" className="w-full" onClick={logout}>
+        <LogOut className="h-4 w-4" />
+        {t("shell.logout")}
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="flex flex-1 bg-gray-50 dark:bg-gray-950">
-      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:flex dark:border-gray-800 dark:bg-gray-900">
-        <nav className="flex-1 space-y-1 p-3">
-          {items.map((item) => {
-            const active = item.href === activeHref;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-                  active
-                    ? "bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800",
-                )}
+    <div className="flex flex-1 flex-col bg-gray-50 dark:bg-gray-950 md:flex-row">
+      {/* Mobile nav trigger — the sidebar below is hidden under md, this is the only way in. */}
+      <div className="sticky top-16 z-30 flex items-center border-b border-gray-200 bg-white px-2 py-2 dark:border-gray-800 dark:bg-gray-900 md:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileNavOpen(true)}
+          aria-label={t("shell.openNav")}
+          className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+        >
+          <Menu className="h-5 w-5" />
+          {t("shell.menu")}
+        </button>
+      </div>
+
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileNavOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="absolute inset-y-0 left-0 flex w-64 max-w-[80vw] flex-col bg-white shadow-xl dark:bg-gray-900">
+            <div className="flex items-center justify-between border-b border-gray-100 p-3 dark:border-gray-800">
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">ChurchHub</span>
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(false)}
+                aria-label={t("shell.closeNav")}
+                className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
               >
-                <Icon className="h-4 w-4" />
-                {t(item.labelKey)}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="border-t border-gray-100 p-3 dark:border-gray-800">
-          <p className="truncate px-3 pb-2 text-xs text-gray-400 dark:text-gray-500">{user.email}</p>
-          <Button variant="secondary" size="sm" className="w-full" onClick={logout}>
-            <LogOut className="h-4 w-4" />
-            {t("shell.logout")}
-          </Button>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {navLinks(() => setMobileNavOpen(false))}
+            {accountFooter}
+          </div>
         </div>
+      )}
+
+      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:flex dark:border-gray-800 dark:bg-gray-900">
+        {navLinks()}
+        {accountFooter}
       </aside>
 
       <main className="mx-auto w-full min-w-0 max-w-4xl flex-1 px-4 py-8">{children}</main>

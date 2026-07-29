@@ -168,8 +168,8 @@ export default function SuperUsersPage() {
         <EmptyState title={t("superUsers.emptyTitle")} action={<Button onClick={openCreate}>{t("superUsers.create")}</Button>} />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
                 <tr>
                   <th className="px-4 py-3">{t("superUsers.colEmail")}</th>
@@ -183,7 +183,7 @@ export default function SuperUsersPage() {
                 {visibleUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">{u.email}</div>
+                      <div className="break-words font-medium text-gray-900 dark:text-gray-100">{u.email}</div>
                       {u.fullName && <div className="text-xs text-gray-500 dark:text-gray-400">{u.fullName}</div>}
                     </td>
                     <td className="px-4 py-3">

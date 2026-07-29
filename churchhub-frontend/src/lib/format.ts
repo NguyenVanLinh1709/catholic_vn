@@ -10,6 +10,9 @@ export function formatTime(value: string): string {
   return `${h ?? "00"}:${m ?? "00"}`;
 }
 
+/** Coarse part-of-day bucket for the mass-time filter; matches the backend MassTimeRange enum. */
+export type MassTimeRange = "MORNING" | "AFTERNOON" | "EVENING";
+
 const DATE_LOCALE: Record<Locale, string> = { vi: "vi-VN", en: "en-GB" };
 
 export function formatDate(iso: string | null | undefined, locale: Locale = "vi"): string {

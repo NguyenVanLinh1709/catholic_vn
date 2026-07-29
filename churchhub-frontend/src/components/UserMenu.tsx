@@ -41,14 +41,21 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
     <div className="flex items-center gap-3">
       <Link
         href={dashboardHref}
+        aria-label={t("header.admin")}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 transition hover:text-brand-700 dark:text-gray-300 dark:hover:text-brand-400"
       >
         <LayoutDashboard className="h-4 w-4" />
-        {t("header.admin")}
+        <span className="hidden sm:inline">{t("header.admin")}</span>
       </Link>
-      <Button variant="secondary" size="sm" onClick={logout} loading={loading}>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={logout}
+        loading={loading}
+        aria-label={t("shell.logout")}
+      >
         <LogOut className="h-4 w-4" />
-        {t("shell.logout")}
+        <span className="hidden sm:inline">{t("shell.logout")}</span>
       </Button>
     </div>
   );

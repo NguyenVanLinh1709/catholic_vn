@@ -29,3 +29,8 @@ churchhub-frontend/public/uploads/
 .idea/
 .vscode/
 *.iml
+
+# Claude Code local tooling
+.claude/
+.agents/
+skills-lock.json

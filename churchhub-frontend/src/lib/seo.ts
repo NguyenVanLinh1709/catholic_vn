@@ -1,4 +1,4 @@
-import type { MassSchedule, Parish } from "./types";
+import type { Article, MassSchedule, Parish } from "./types";
 import { formatTime } from "./format";
 import { absoluteUrl } from "./site";
 
@@ -85,4 +85,37 @@ export function parishListJsonLd(
       item: churchJsonLd(parish, massByParish[parish.id] ?? []),
     })),
   };
+}
+
+/** Top-level (`@context`-wrapped) Church schema for the parish's own detail page. */
+export function parishJsonLd(parish: Parish, schedules: MassSchedule[]) {
+  return { "@context": "https://schema.org", ...churchJsonLd(parish, schedules) };
+}
+
+/** schema.org Article node for a parish news post's own detail page. */
+export function articleJsonLd(article: Article, parish: Parish) {
+  const url = absoluteUrl(`/parishes/${parish.slug}/articles/${article.slug}`);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": url,
+    url,
+    mainEntityOfPage: url,
+    headline: article.title,
+    ...(article.content ? { description: excerpt(article.content) } : {}),
+    ...(article.coverUrl ? { image: [article.coverUrl] } : {}),
+    ...(article.publishedAt ? { datePublished: article.publishedAt } : {}),
+    ...(article.updatedAt ? { dateModified: article.updatedAt } : {}),
+    author: { "@type": "Organization", name: parish.name, url: absoluteUrl(`/parishes/${parish.slug}`) },
+    publisher: { "@type": "Organization", name: "ChurchHub", url: absoluteUrl("/") },
+  };
+}
+
+/** Plain-text meta-description snippet: trims to `maxLen`, breaking on a word boundary. */
+export function excerpt(text: string, maxLen = 160): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= maxLen) return clean;
+  const cut = clean.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, lastSpace > 0 ? lastSpace : maxLen)}…`;
 }
