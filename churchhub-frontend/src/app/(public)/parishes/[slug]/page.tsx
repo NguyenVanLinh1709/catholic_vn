@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { Church, Clock, MapPin, Phone, User } from "lucide-react";
 import { getParishDetail, listParishArticles, ApiError } from "@/lib/api";
 import type { ArticleSummary } from "@/lib/types";
-import { formatTime, groupMassSchedules } from "@/lib/format";
+import { formatParishAddress, formatTime, groupMassSchedules } from "@/lib/format";
 import { getTranslations } from "@/lib/i18n/server";
 import { dayTypeLabel, priestRoleLabel, dayOfWeekLabel, relativeTime } from "@/lib/i18n/labels";
 import { EmptyState } from "@/components/Feedback";
@@ -47,6 +47,7 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
   const { parish, priests, massSchedules } = detail;
   const sortedPriests = [...priests].sort((a, b) => a.orderIndex - b.orderIndex);
   const massGroups = groupMassSchedules(massSchedules);
+  const address = formatParishAddress(parish);
 
   let articles: ArticleSummary[] = [];
   try {
@@ -76,10 +77,10 @@ export default async function ParishDetailPage({ params }: { params: { slug: str
       <header className="space-y-3 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{parish.name}</h1>
         <div className="flex flex-col gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-          {parish.address && (
+          {address && (
             <p className="flex items-start gap-2">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
-              {parish.address}
+              {address}
             </p>
           )}
           {parish.phone && (

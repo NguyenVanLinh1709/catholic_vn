@@ -37,6 +37,12 @@ public class Parish extends BaseEntity {
     @Column(name = "address", length = 500)
     private String address;
 
+    @Column(name = "province", length = 120)
+    private String province;
+
+    @Column(name = "ward", length = 150)
+    private String ward;
+
     @Column(name = "phone", length = 30)
     private String phone;
 

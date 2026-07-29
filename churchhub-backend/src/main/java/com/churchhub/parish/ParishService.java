@@ -8,7 +8,6 @@ import com.churchhub.common.SlugUtil;
 import com.churchhub.massschedule.DayType;
 import com.churchhub.massschedule.MassSchedule;
 import com.churchhub.massschedule.MassScheduleRepository;
-import com.churchhub.massschedule.MassTimeRange;
 import com.churchhub.massschedule.dto.MassScheduleRequest;
 import com.churchhub.massschedule.dto.MassScheduleResponse;
 import com.churchhub.parish.dto.ParishDetailResponse;
@@ -41,25 +40,31 @@ public class ParishService {
 
     /**
      * Public callers and PARISH_ADMIN only ever see active parishes; SUPER_ADMIN sees all.
-     * dayType / dayOfWeek / time are an optional mass-schedule filter: when any is supplied,
-     * only parishes with at least one matching mass schedule are returned (filtered in the DB,
-     * not fetched-then-filtered in memory).
+     * province (exact match) / ward (substring) are an optional region filter, independent of
+     * the mass-schedule filter. dayType / dayOfWeek / timeFrom / timeTo are an optional
+     * mass-schedule filter: when any is supplied, only parishes with at least one matching mass
+     * schedule are returned (filtered in the DB, not fetched-then-filtered in memory). timeFrom /
+     * timeTo are an inclusive [timeFrom, timeTo] bound and may be supplied independently.
      */
     @Transactional(readOnly = true)
     public PageResponse<ParishResponse> search(
-            String name, DayType dayType, Short dayOfWeek, MassTimeRange time, Pageable pageable) {
+            String name, String province, String ward,
+            DayType dayType, Short dayOfWeek, LocalTime timeFrom, LocalTime timeTo, Pageable pageable) {
         if (dayOfWeek != null && (dayOfWeek < 1 || dayOfWeek > 7)) {
             throw new BadRequestException("dayOfWeek must be between 1 (Monday) and 7 (Sunday)");
         }
+        if (timeFrom != null && timeTo != null && !timeFrom.isBefore(timeTo)) {
+            throw new BadRequestException("timeFrom must be before timeTo");
+        }
         boolean includeInactive = isSuperAdmin();
         String trimmedName = StringUtils.hasText(name) ? name.trim() : null;
-        LocalTime startTime = time != null ? time.start() : null;
-        LocalTime endTime = time != null ? time.end() : null;
-        boolean hasMassFilter = dayType != null || dayOfWeek != null || time != null;
+        String trimmedProvince = StringUtils.hasText(province) ? province.trim() : null;
+        String trimmedWard = StringUtils.hasText(ward) ? ward.trim() : null;
+        boolean hasMassFilter = dayType != null || dayOfWeek != null || timeFrom != null || timeTo != null;
         Page<Parish> page = parishRepository.search(
-                trimmedName, !includeInactive, hasMassFilter,
+                trimmedName, trimmedProvince, trimmedWard, !includeInactive, hasMassFilter,
                 dayType, dayOfWeek != null, dayOfWeek,
-                startTime != null, startTime, endTime != null, endTime, pageable);
+                timeFrom != null, timeFrom, timeTo != null, timeTo, pageable);
         return PageResponse.from(page.map(ParishResponse::from));
     }
 
@@ -92,6 +97,8 @@ public class ParishService {
                 .name(request.name())
                 .slug(slug)
                 .address(request.address())
+                .province(request.province())
+                .ward(request.ward())
                 .phone(request.phone())
                 .latitude(request.latitude())
                 .longitude(request.longitude())
@@ -141,6 +148,8 @@ public class ParishService {
         }
         parish.setName(request.name());
         parish.setAddress(request.address());
+        parish.setProvince(request.province());
+        parish.setWard(request.ward());
         parish.setPhone(request.phone());
         parish.setLatitude(request.latitude());
         parish.setLongitude(request.longitude());

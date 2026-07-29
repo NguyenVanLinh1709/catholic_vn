@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/Button";
-import { Field, Input, Textarea } from "@/components/Field";
+import { Field, Input, Select, Textarea } from "@/components/Field";
 import { LoadingBlock, EmptyState } from "@/components/Feedback";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/lib/i18n/provider";
 import { isValidPhone } from "@/lib/validation";
+import { VN_PROVINCES } from "@/lib/vn-regions";
 import type { Parish } from "@/lib/types";
 import type { ParishInput } from "@/lib/api";
 import { getMyParish, updateMyParish } from "../actions";
@@ -52,6 +53,8 @@ export function ParishInfoSection() {
         setForm({
           name: p.name,
           address: p.address ?? "",
+          province: p.province ?? "",
+          ward: p.ward ?? "",
           phone: p.phone ?? "",
           description: p.description ?? "",
           isActive: p.active,
@@ -89,6 +92,8 @@ export function ParishInfoSection() {
     const res = await updateMyParish({
       ...form,
       address: emptyToNull(form.address),
+      province: emptyToNull(form.province),
+      ward: emptyToNull(form.ward),
       phone: emptyToNull(form.phone),
       description: emptyToNull(form.description),
       latitude: coords.lat,
@@ -137,6 +142,22 @@ export function ParishInfoSection() {
                   maxLength={10}
                   placeholder="0xxxxxxxxx"
                 />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("parishInfo.province")}>
+                <Select value={form.province ?? ""} onChange={(e) => set("province", e.target.value)}>
+                  <option value="">{t("filter.provinceAll")}</option>
+                  {VN_PROVINCES.map((prov) => (
+                    <option key={prov} value={prov}>
+                      {prov}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label={t("parishInfo.ward")}>
+                <Input value={form.ward ?? ""} onChange={(e) => set("ward", e.target.value)} />
               </Field>
             </div>
 

@@ -1,7 +1,15 @@
-import type { DayType, MassSchedule } from "./types";
+import type { DayType, MassSchedule, Parish } from "./types";
 import type { Locale } from "./i18n/config";
 
 export const DAY_TYPE_ORDER: DayType[] = ["WEEKDAY", "SUNDAY", "SPECIAL"];
+
+/** Allowed page sizes for the parish directory's page-size selector. */
+export const PAGE_SIZES = [12, 24, 48, 96];
+
+/** Joins the address components (detail, ward, province) into one display string. */
+export function formatParishAddress(parish: Pick<Parish, "address" | "ward" | "province">): string {
+  return [parish.address, parish.ward, parish.province].filter(Boolean).join(", ");
+}
 
 /** "07:30:00" or "07:30" -> "07:30" (locale-neutral). */
 export function formatTime(value: string): string {
@@ -9,9 +17,6 @@ export function formatTime(value: string): string {
   const [h, m] = value.split(":");
   return `${h ?? "00"}:${m ?? "00"}`;
 }
-
-/** Coarse part-of-day bucket for the mass-time filter; matches the backend MassTimeRange enum. */
-export type MassTimeRange = "MORNING" | "AFTERNOON" | "EVENING";
 
 const DATE_LOCALE: Record<Locale, string> = { vi: "vi-VN", en: "en-GB" };
 

@@ -2,7 +2,6 @@ package com.churchhub.parish;
 
 import com.churchhub.common.PageResponse;
 import com.churchhub.massschedule.DayType;
-import com.churchhub.massschedule.MassTimeRange;
 import com.churchhub.parish.dto.ParishDetailResponse;
 import com.churchhub.parish.dto.ParishRequest;
 import com.churchhub.parish.dto.ParishResponse;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -40,11 +41,14 @@ public class ParishController {
     @GetMapping
     public PageResponse<ParishResponse> search(
             @RequestParam(required = false) String name,
+            @RequestParam(required = false) String province,
+            @RequestParam(required = false) String ward,
             @RequestParam(required = false) DayType dayType,
             @RequestParam(required = false) Short dayOfWeek,
-            @RequestParam(required = false) MassTimeRange time,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "HH:mm") LocalTime timeFrom,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "HH:mm") LocalTime timeTo,
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
-        return parishService.search(name, dayType, dayOfWeek, time, pageable);
+        return parishService.search(name, province, ward, dayType, dayOfWeek, timeFrom, timeTo, pageable);
     }
 
     @GetMapping("/{slug}")

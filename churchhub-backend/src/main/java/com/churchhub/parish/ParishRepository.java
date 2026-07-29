@@ -17,9 +17,10 @@ public interface ParishRepository extends JpaRepository<Parish, Long> {
     boolean existsBySlug(String slug);
 
     /**
-     * Directory search: name (optional, case-insensitive substring), active-only toggle (hidden
-     * from PARISH_ADMIN/public unless SUPER_ADMIN), and an optional mass-schedule filter
-     * (dayType / dayOfWeek / [startTime,endTime) time-of-day bucket - all optional, ANDed).
+     * Directory search: name (optional, case-insensitive substring), province (optional, exact
+     * match) / ward (optional, case-insensitive substring) region filter, active-only toggle
+     * (hidden from PARISH_ADMIN/public unless SUPER_ADMIN), and an optional mass-schedule filter
+     * (dayType / dayOfWeek / [startTime,endTime] time-of-day range - all optional, ANDed).
      * A parish matches the mass filter if at least one of its schedules satisfies all of the
      * supplied criteria. A schedule with a NULL dayOfWeek applies to every day of its dayType
      * (see MassSchedule.dayOfWeek), so it also matches a specific dayOfWeek filter consistent
@@ -32,10 +33,14 @@ public interface ParishRepository extends JpaRepository<Parish, Long> {
      * with "cannot cast type bytea to ...". Booleans sidestep the inference problem entirely;
      * the value parameters are then only ever used where they already have typed context (e.g.
      * compared directly against a mapped entity attribute), which Postgres resolves correctly.
+     * name/province/ward don't need this treatment - like dayType, a bare String/enum
+     * {@code :param IS NULL} check resolves fine.
      */
     @Query(value = """
             SELECT p FROM Parish p
             WHERE (:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
+              AND (:province IS NULL OR p.province = :province)
+              AND (:ward IS NULL OR LOWER(p.ward) LIKE LOWER(CONCAT('%', CAST(:ward AS string), '%')))
               AND (:activeOnly = FALSE OR p.active = TRUE)
               AND (
                     :hasMassFilter = FALSE
@@ -52,13 +57,15 @@ public interface ParishRepository extends JpaRepository<Parish, Long> {
                                     ))
                               )
                           AND (:hasStartTime = FALSE OR m.massTime >= :startTime)
-                          AND (:hasEndTime = FALSE OR m.massTime < :endTime)
+                          AND (:hasEndTime = FALSE OR m.massTime <= :endTime)
                     )
                   )
             """,
             countQuery = """
             SELECT COUNT(p) FROM Parish p
             WHERE (:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
+              AND (:province IS NULL OR p.province = :province)
+              AND (:ward IS NULL OR LOWER(p.ward) LIKE LOWER(CONCAT('%', CAST(:ward AS string), '%')))
               AND (:activeOnly = FALSE OR p.active = TRUE)
               AND (
                     :hasMassFilter = FALSE
@@ -75,12 +82,14 @@ public interface ParishRepository extends JpaRepository<Parish, Long> {
                                     ))
                               )
                           AND (:hasStartTime = FALSE OR m.massTime >= :startTime)
-                          AND (:hasEndTime = FALSE OR m.massTime < :endTime)
+                          AND (:hasEndTime = FALSE OR m.massTime <= :endTime)
                     )
                   )
             """)
     Page<Parish> search(
             @Param("name") String name,
+            @Param("province") String province,
+            @Param("ward") String ward,
             @Param("activeOnly") boolean activeOnly,
             @Param("hasMassFilter") boolean hasMassFilter,
             @Param("dayType") DayType dayType,

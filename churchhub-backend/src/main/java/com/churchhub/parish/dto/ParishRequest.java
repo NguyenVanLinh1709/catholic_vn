@@ -15,6 +15,8 @@ import java.util.List;
 public record ParishRequest(
         @NotBlank @Size(max = 255) String name,
         @Size(max = 500) String address,
+        @Size(max = 120) String province,
+        @Size(max = 150) String ward,
         @Pattern(regexp = ValidationPatterns.VN_PHONE_REGEX, message = ValidationPatterns.VN_PHONE_MESSAGE)
         String phone,
         @DecimalMin("-90.0") @DecimalMax("90.0") BigDecimal latitude,

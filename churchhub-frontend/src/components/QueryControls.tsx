@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
-import type { DayType } from "@/lib/types";
-import type { MassTimeRange } from "@/lib/format";
-import { dayOfWeekLabel, dayTypeLabel } from "@/lib/i18n/labels";
+import { Search, X } from "lucide-react";
+import { PAGE_SIZES } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/provider";
+import { VN_PROVINCES } from "@/lib/vn-regions";
 import { Input, Select } from "./Field";
 import { Button } from "./Button";
 import { Pagination } from "./Pagination";
@@ -17,7 +16,12 @@ export function SearchBar({ placeholder }: { placeholder?: string }) {
   const pathname = usePathname();
   const params = useSearchParams();
   const { t } = useI18n();
-  const [value, setValue] = useState(params.get("search") ?? "");
+  const searchParam = params.get("search") ?? "";
+  const [value, setValue] = useState(searchParam);
+
+  // Keep in sync when the URL changes from elsewhere (clear-all, back/forward),
+  // without clobbering in-progress typing (this only fires when the URL itself changes).
+  useEffect(() => setValue(searchParam), [searchParam]);
 
   function submit() {
     const next = new URLSearchParams(params.toString());
@@ -47,19 +51,10 @@ export function SearchBar({ placeholder }: { placeholder?: string }) {
   );
 }
 
-const DAY_TYPES: DayType[] = ["SUNDAY", "WEEKDAY", "SPECIAL"];
-const TIME_RANGES: MassTimeRange[] = ["MORNING", "AFTERNOON", "EVENING"];
-const TIME_RANGE_KEY = {
-  MORNING: "filter.timeMorning",
-  AFTERNOON: "filter.timeAfternoon",
-  EVENING: "filter.timeEvening",
-} as const;
-const DAYS_OF_WEEK = [1, 2, 3, 4, 5, 6, 7];
-
 /**
- * Filters the parish directory by mass day type / day of week / time of day,
- * via the `dayType`, `dayOfWeek` and `time` query params (reset `page` on
- * change, like SearchBar).
+ * Filters the parish directory by mass time-of-day range, via the `timeFrom`/`timeTo` query
+ * params (HH:mm, both independently optional, reset `page` on change like SearchBar). Only
+ * parishes with at least one mass falling inside the entered range are returned.
  */
 export function MassFilter() {
   const router = useRouter();
@@ -67,56 +62,173 @@ export function MassFilter() {
   const params = useSearchParams();
   const { t } = useI18n();
 
-  const dayType = params.get("dayType") ?? "";
-  const dayOfWeek = params.get("dayOfWeek") ?? "";
-  const time = params.get("time") ?? "";
+  const timeFrom = params.get("timeFrom") ?? "";
+  const timeTo = params.get("timeTo") ?? "";
 
-  function update(key: "dayType" | "dayOfWeek" | "time", value: string) {
-    const next = new URLSearchParams(params.toString());
-    if (value) next.set(key, value);
-    else next.delete(key);
+  function update(next: { timeFrom?: string; timeTo?: string }) {
+    const sp = new URLSearchParams(params.toString());
+    const nextFrom = next.timeFrom ?? timeFrom;
+    const nextTo = next.timeTo ?? timeTo;
+    if (nextFrom) sp.set("timeFrom", nextFrom);
+    else sp.delete("timeFrom");
+    if (nextTo) sp.set("timeTo", nextTo);
+    else sp.delete("timeTo");
+    sp.delete("page");
+    router.push(`${pathname}?${sp.toString()}`);
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-sm text-gray-500 dark:text-gray-400">{t("filter.timeRangeLabel")}</span>
+      <Input
+        type="time"
+        value={timeFrom}
+        onChange={(e) => update({ timeFrom: e.target.value })}
+        aria-label={t("filter.timeFromAria")}
+        className="w-[7.5rem]"
+      />
+      <span className="text-gray-400 dark:text-gray-500">–</span>
+      <Input
+        type="time"
+        value={timeTo}
+        onChange={(e) => update({ timeTo: e.target.value })}
+        aria-label={t("filter.timeToAria")}
+        className="w-[7.5rem]"
+      />
+    </div>
+  );
+}
+
+/**
+ * Filters the parish directory by region via the `province` (exact match,
+ * immediate push like MassFilter) and `ward` (substring, submit-on-Enter/blur
+ * like SearchBar) query params (reset `page` on change).
+ */
+export function RegionFilter() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const { t } = useI18n();
+
+  const province = params.get("province") ?? "";
+  const wardParam = params.get("ward") ?? "";
+  const [ward, setWard] = useState(wardParam);
+
+  // Keep in sync when the URL changes from elsewhere (clear-all, back/forward),
+  // without clobbering in-progress typing (this only fires when the URL itself changes).
+  useEffect(() => setWard(wardParam), [wardParam]);
+
+  function push(next: URLSearchParams) {
     next.delete("page");
     router.push(`${pathname}?${next.toString()}`);
+  }
+
+  function updateProvince(value: string) {
+    const next = new URLSearchParams(params.toString());
+    if (value) next.set("province", value);
+    else next.delete("province");
+    push(next);
+  }
+
+  function submitWard() {
+    const next = new URLSearchParams(params.toString());
+    if (ward.trim()) next.set("ward", ward.trim());
+    else next.delete("ward");
+    push(next);
   }
 
   return (
     <div className="flex flex-wrap gap-2">
       <Select
-        value={dayType}
-        onChange={(e) => update("dayType", e.target.value)}
-        aria-label={t("filter.dayTypeAria")}
-        className="w-auto"
+        value={province}
+        onChange={(e) => updateProvince(e.target.value)}
+        aria-label={t("filter.provinceAria")}
+        className="w-36"
       >
-        <option value="">{t("filter.dayTypeAll")}</option>
-        {DAY_TYPES.map((d) => (
-          <option key={d} value={d}>
-            {dayTypeLabel(t, d)}
+        <option value="">{t("filter.provinceAll")}</option>
+        {VN_PROVINCES.map((p) => (
+          <option key={p} value={p}>
+            {p}
           </option>
         ))}
       </Select>
+      <Input
+        value={ward}
+        onChange={(e) => setWard(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") submitWard();
+        }}
+        onBlur={submitWard}
+        placeholder={t("filter.wardPlaceholder")}
+        aria-label={t("filter.wardAria")}
+        className="w-36"
+      />
+    </div>
+  );
+}
+
+const FILTER_PARAMS = ["search", "province", "ward", "timeFrom", "timeTo"] as const;
+
+/**
+ * Clears every active directory filter (search, region, mass-time) in one action, resetting
+ * `page` but keeping `size`. Renders nothing when no filter is currently active.
+ */
+export function ClearFiltersButton() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const { t } = useI18n();
+
+  if (!FILTER_PARAMS.some((key) => params.has(key))) return null;
+
+  function clear() {
+    const next = new URLSearchParams(params.toString());
+    for (const key of FILTER_PARAMS) next.delete(key);
+    next.delete("page");
+    const qs = next.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={clear}
+      className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+    >
+      <X className="h-3.5 w-3.5" />
+      {t("filter.clearAll")}
+    </button>
+  );
+}
+
+/** Picks how many parishes appear per page, via the `size` query param (resets `page` on change). */
+export function PageSizeSelect({ defaultSize }: { defaultSize: number }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const { t } = useI18n();
+
+  const size = params.get("size") ?? String(defaultSize);
+
+  function update(value: string) {
+    const next = new URLSearchParams(params.toString());
+    if (Number(value) === defaultSize) next.delete("size");
+    else next.set("size", value);
+    next.delete("page");
+    router.push(`${pathname}?${next.toString()}`);
+  }
+
+  return (
+    <div className="w-28 shrink-0">
       <Select
-        value={dayOfWeek}
-        onChange={(e) => update("dayOfWeek", e.target.value)}
-        aria-label={t("filter.dayOfWeekAria")}
-        className="w-auto"
+        value={size}
+        onChange={(e) => update(e.target.value)}
+        aria-label={t("filter.pageSizeAria")}
+        className="h-full"
       >
-        <option value="">{t("filter.dayOfWeekAll")}</option>
-        {DAYS_OF_WEEK.map((d) => (
-          <option key={d} value={d}>
-            {dayOfWeekLabel(t, d)}
-          </option>
-        ))}
-      </Select>
-      <Select
-        value={time}
-        onChange={(e) => update("time", e.target.value)}
-        aria-label={t("filter.timeAria")}
-        className="w-auto"
-      >
-        <option value="">{t("filter.timeAll")}</option>
-        {TIME_RANGES.map((r) => (
-          <option key={r} value={r}>
-            {t(TIME_RANGE_KEY[r])}
+        {PAGE_SIZES.map((n) => (
+          <option key={n} value={n}>
+            {t("filter.pageSizeOption", { count: n })}
           </option>
         ))}
       </Select>

@@ -10,6 +10,8 @@ export interface Parish {
   name: string;
   slug: string;
   address: string | null;
+  province: string | null;
+  ward: string | null;
   phone: string | null;
   latitude: number | null;
   longitude: number | null;

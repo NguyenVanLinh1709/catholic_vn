@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Clock, ExternalLink, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { Button } from "@/components/Button";
-import { Field, Input, Textarea } from "@/components/Field";
+import { Field, Input, Select, Textarea } from "@/components/Field";
+import { VN_PROVINCES } from "@/lib/vn-regions";
 import { Modal, ConfirmDialog } from "@/components/Modal";
 import { Badge, LoadingBlock, EmptyState } from "@/components/Feedback";
 import { Pagination } from "@/components/Pagination";
@@ -26,7 +27,15 @@ import {
   setParishAdminsAction,
 } from "../actions";
 
-const EMPTY: ParishInput = { name: "", address: "", phone: "", description: "", isActive: true };
+const EMPTY: ParishInput = {
+  name: "",
+  address: "",
+  province: "",
+  ward: "",
+  phone: "",
+  description: "",
+  isActive: true,
+};
 
 /** Build the mass-schedule payload for a given time slot group. */
 function massPayload(dayType: MassScheduleInput["dayType"], massTime: string): MassScheduleInput {
@@ -107,6 +116,8 @@ export default function SuperParishesPage() {
       name: p.name,
       slug: p.slug,
       address: p.address ?? "",
+      province: p.province ?? "",
+      ward: p.ward ?? "",
       phone: p.phone ?? "",
       latitude: p.latitude,
       longitude: p.longitude,
@@ -141,6 +152,8 @@ export default function SuperParishesPage() {
       ...form,
       slug: form.slug?.trim() || undefined,
       address: form.address?.trim() || null,
+      province: form.province?.trim() || null,
+      ward: form.ward?.trim() || null,
       phone: form.phone?.trim() || null,
       description: form.description?.trim() || null,
     };
@@ -333,6 +346,27 @@ export default function SuperParishesPage() {
                 <Input
                   value={form.phone ?? ""}
                   onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                />
+              </Field>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("superParishes.fieldProvince")}>
+                <Select
+                  value={form.province ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, province: e.target.value }))}
+                >
+                  <option value="">{t("filter.provinceAll")}</option>
+                  {VN_PROVINCES.map((prov) => (
+                    <option key={prov} value={prov}>
+                      {prov}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label={t("superParishes.fieldWard")}>
+                <Input
+                  value={form.ward ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, ward: e.target.value }))}
                 />
               </Field>
             </div>

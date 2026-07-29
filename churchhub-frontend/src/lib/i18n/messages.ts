@@ -78,6 +78,8 @@ const vi = {
   "pagination.label": "Phân trang",
   "pagination.prev": "Trang trước",
   "pagination.next": "Trang sau",
+  "pagination.goToLabel": "Trang",
+  "pagination.goToAria": "Đến trang số",
 
   // Day types / days of week / priest roles / relative time
   "day.weekday": "Ngày thường",
@@ -125,7 +127,9 @@ const vi = {
   "parishInfo.title": "Thông tin nhà thờ",
   "parishInfo.subtitle": "Cập nhật thông tin hiển thị công khai của giáo xứ.",
   "parishInfo.name": "Tên nhà thờ",
-  "parishInfo.address": "Địa chỉ",
+  "parishInfo.address": "Địa chỉ chi tiết",
+  "parishInfo.province": "Tỉnh/Thành phố",
+  "parishInfo.ward": "Phường/Xã",
   "parishInfo.phone": "Điện thoại",
   "parishInfo.location": "Vị trí (toạ độ Google Maps)",
   "parishInfo.locationPlaceholder": "Ví dụ: 10.762622, 106.660172",
@@ -236,7 +240,9 @@ const vi = {
   "superParishes.editTitle": "Sửa nhà thờ",
   "superParishes.addTitle": "Thêm nhà thờ",
   "superParishes.fieldName": "Tên nhà thờ",
-  "superParishes.fieldAddress": "Địa chỉ",
+  "superParishes.fieldAddress": "Địa chỉ chi tiết",
+  "superParishes.fieldProvince": "Tỉnh/Thành phố",
+  "superParishes.fieldWard": "Phường/Xã",
   "superParishes.fieldPhone": "Điện thoại",
   "superParishes.fieldDescription": "Mô tả",
   "superParishes.sectionMass": "Giờ lễ",
@@ -295,18 +301,25 @@ const vi = {
   "home.emptyTitle": "Không tìm thấy nhà thờ nào",
   "home.emptySearch": "Không có kết quả cho “{query}”. Thử từ khoá khác.",
   "home.emptyNoData": "Hiện chưa có dữ liệu nhà thờ.",
-  "home.emptyFilter": "Không có giáo xứ nào có giờ lễ khớp với bộ lọc đã chọn.",
+  "home.emptyFilter": "Không có giáo xứ nào khớp với bộ lọc đã chọn.",
+
+  // Region filter (home page)
+  "filter.provinceAria": "Lọc theo tỉnh/thành phố",
+  "filter.provinceAll": "Tất cả tỉnh/thành",
+  "filter.wardAria": "Lọc theo phường/xã",
+  "filter.wardPlaceholder": "Phường/xã…",
 
   // Mass time filter (home page)
-  "filter.dayTypeAria": "Lọc theo loại lễ",
-  "filter.dayTypeAll": "Tất cả loại lễ",
-  "filter.dayOfWeekAria": "Lọc theo thứ trong tuần",
-  "filter.dayOfWeekAll": "Tất cả các thứ",
-  "filter.timeAria": "Lọc theo khung giờ",
-  "filter.timeAll": "Tất cả khung giờ",
-  "filter.timeMorning": "Buổi sáng (trước 12:00)",
-  "filter.timeAfternoon": "Buổi chiều (12:00–18:00)",
-  "filter.timeEvening": "Buổi tối (sau 18:00)",
+  "filter.timeRangeLabel": "Giờ lễ:",
+  "filter.timeFromAria": "Từ giờ",
+  "filter.timeToAria": "Đến giờ",
+
+  // Clear-all filters (home page)
+  "filter.clearAll": "Xóa bộ lọc",
+
+  // Page size selector (home page)
+  "filter.pageSizeAria": "Số nhà thờ mỗi trang",
+  "filter.pageSizeOption": "{count} / trang",
 
   // Public parish detail
   "parishDetail.home": "Trang chủ",
@@ -396,6 +409,8 @@ const en: Record<MessageKey, string> = {
   "pagination.label": "Pagination",
   "pagination.prev": "Previous page",
   "pagination.next": "Next page",
+  "pagination.goToLabel": "Page",
+  "pagination.goToAria": "Go to page number",
 
   "day.weekday": "Weekday",
   "day.sunday": "Sunday",
@@ -438,7 +453,9 @@ const en: Record<MessageKey, string> = {
   "parishInfo.title": "Parish information",
   "parishInfo.subtitle": "Update the parish's public information.",
   "parishInfo.name": "Parish name",
-  "parishInfo.address": "Address",
+  "parishInfo.address": "Detailed address",
+  "parishInfo.province": "Province/City",
+  "parishInfo.ward": "Ward/Commune",
   "parishInfo.phone": "Phone",
   "parishInfo.location": "Location (Google Maps coordinates)",
   "parishInfo.locationPlaceholder": "e.g. 10.762622, 106.660172",
@@ -542,7 +559,9 @@ const en: Record<MessageKey, string> = {
   "superParishes.editTitle": "Edit parish",
   "superParishes.addTitle": "Add parish",
   "superParishes.fieldName": "Parish name",
-  "superParishes.fieldAddress": "Address",
+  "superParishes.fieldAddress": "Detailed address",
+  "superParishes.fieldProvince": "Province/City",
+  "superParishes.fieldWard": "Ward/Commune",
   "superParishes.fieldPhone": "Phone",
   "superParishes.fieldDescription": "Description",
   "superParishes.sectionMass": "Mass schedules",
@@ -599,18 +618,25 @@ const en: Record<MessageKey, string> = {
   "home.emptyTitle": "No parishes found",
   "home.emptySearch": "No results for “{query}”. Try another keyword.",
   "home.emptyNoData": "No parish data available yet.",
-  "home.emptyFilter": "No parish has a mass time matching the selected filter.",
+  "home.emptyFilter": "No parish matches the selected filter.",
+
+  // Region filter (home page)
+  "filter.provinceAria": "Filter by province/city",
+  "filter.provinceAll": "All provinces",
+  "filter.wardAria": "Filter by ward/commune",
+  "filter.wardPlaceholder": "Ward/commune…",
 
   // Mass time filter (home page)
-  "filter.dayTypeAria": "Filter by mass day type",
-  "filter.dayTypeAll": "All day types",
-  "filter.dayOfWeekAria": "Filter by day of week",
-  "filter.dayOfWeekAll": "All days",
-  "filter.timeAria": "Filter by time of day",
-  "filter.timeAll": "All times",
-  "filter.timeMorning": "Morning (before 12:00)",
-  "filter.timeAfternoon": "Afternoon (12:00–18:00)",
-  "filter.timeEvening": "Evening (after 18:00)",
+  "filter.timeRangeLabel": "Mass time:",
+  "filter.timeFromAria": "From hour",
+  "filter.timeToAria": "To hour",
+
+  // Clear-all filters (home page)
+  "filter.clearAll": "Clear filters",
+
+  // Page size selector (home page)
+  "filter.pageSizeAria": "Parishes per page",
+  "filter.pageSizeOption": "{count} / page",
 
   "parishDetail.home": "Home",
   "parishDetail.priests": "Priests",

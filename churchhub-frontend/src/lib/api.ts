@@ -9,7 +9,6 @@ import {
 } from "./cookies";
 import { getLocale } from "./i18n/server";
 import { translate } from "./i18n/messages";
-import type { MassTimeRange } from "./format";
 import type {
   AdminUser,
   Article,
@@ -140,6 +139,8 @@ export interface ParishInput {
   name: string;
   slug?: string;
   address?: string | null;
+  province?: string | null;
+  ward?: string | null;
   phone?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -195,16 +196,19 @@ export function listParishes(params: {
   search?: string;
   page?: number;
   size?: number;
-  /** Mass-schedule filter (all optional, ANDed): only parishes with a matching mass are returned. */
-  dayType?: DayType;
-  dayOfWeek?: number;
-  time?: MassTimeRange;
+  /** Region filter (both optional, ANDed): province is exact match, ward is a substring. */
+  province?: string;
+  ward?: string;
+  /** Mass time-of-day filter (HH:mm, inclusive bounds, independently optional): only parishes with a matching mass are returned. */
+  timeFrom?: string;
+  timeTo?: string;
 }): Promise<Page<Parish>> {
   const qs = new URLSearchParams();
   if (params.search) qs.set("name", params.search);
-  if (params.dayType) qs.set("dayType", params.dayType);
-  if (params.dayOfWeek) qs.set("dayOfWeek", String(params.dayOfWeek));
-  if (params.time) qs.set("time", params.time);
+  if (params.province) qs.set("province", params.province);
+  if (params.ward) qs.set("ward", params.ward);
+  if (params.timeFrom) qs.set("timeFrom", params.timeFrom);
+  if (params.timeTo) qs.set("timeTo", params.timeTo);
   qs.set("page", String(params.page ?? 0));
   qs.set("size", String(params.size ?? 12));
   return apiFetch<Page<Parish>>(`/api/parishes?${qs.toString()}`, { revalidate: 30 });

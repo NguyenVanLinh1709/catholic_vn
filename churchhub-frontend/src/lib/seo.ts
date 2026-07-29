@@ -57,8 +57,16 @@ export function churchJsonLd(parish: Parish, schedules: MassSchedule[]) {
     url,
     ...(parish.description ? { description: parish.description } : {}),
     ...(parish.phone ? { telephone: parish.phone } : {}),
-    ...(parish.address
-      ? { address: { "@type": "PostalAddress", streetAddress: parish.address } }
+    ...(parish.address || parish.ward || parish.province
+      ? {
+          address: {
+            "@type": "PostalAddress",
+            ...(parish.address ? { streetAddress: parish.address } : {}),
+            ...(parish.ward ? { addressLocality: parish.ward } : {}),
+            ...(parish.province ? { addressRegion: parish.province } : {}),
+            addressCountry: "VN",
+          },
+        }
       : {}),
     ...(parish.latitude != null && parish.longitude != null
       ? { geo: { "@type": "GeoCoordinates", latitude: parish.latitude, longitude: parish.longitude } }

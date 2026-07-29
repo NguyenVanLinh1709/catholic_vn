@@ -2,24 +2,39 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, MapPin, Phone } from "lucide-react";
 import { listParishes, listMassSchedules, ApiError } from "@/lib/api";
-import type { DayType, MassSchedule, Parish } from "@/lib/types";
-import { formatTime, groupMassSchedules, type MassTimeRange } from "@/lib/format";
+import type { MassSchedule, Parish } from "@/lib/types";
+import {
+  formatParishAddress,
+  formatTime,
+  groupMassSchedules,
+  PAGE_SIZES,
+} from "@/lib/format";
 import { dayTypeLabel } from "@/lib/i18n/labels";
 import type { TranslateFn } from "@/lib/i18n/messages";
-import { SearchBar, MassFilter, QueryPagination } from "@/components/QueryControls";
+import {
+  SearchBar,
+  MassFilter,
+  RegionFilter,
+  ClearFiltersButton,
+  PageSizeSelect,
+  QueryPagination,
+} from "@/components/QueryControls";
 import { EmptyState } from "@/components/Feedback";
 import { getTranslations } from "@/lib/i18n/server";
 import { parishListJsonLd } from "@/lib/seo";
 import { absoluteUrl } from "@/lib/site";
+import { VN_PROVINCES } from "@/lib/vn-regions";
 
 const PAGE_SIZE = 12;
 
 interface HomeSearchParams {
   search?: string;
   page?: string;
-  dayType?: string;
-  dayOfWeek?: string;
-  time?: string;
+  size?: string;
+  province?: string;
+  ward?: string;
+  timeFrom?: string;
+  timeTo?: string;
 }
 
 export function generateMetadata({
@@ -40,7 +55,7 @@ export function generateMetadata({
     description,
     // Search/filter result pages are thin/duplicate — keep them out of the
     // index but let crawlers follow through to the parish pages.
-    ...(search || searchParams.dayType || searchParams.dayOfWeek || searchParams.time
+    ...(search || searchParams.timeFrom || searchParams.timeTo || searchParams.province || searchParams.ward
       ? { robots: { index: false, follow: true } }
       : {}),
     alternates: { canonical },
@@ -48,20 +63,19 @@ export function generateMetadata({
   };
 }
 
-const VALID_DAY_TYPES: DayType[] = ["WEEKDAY", "SUNDAY", "SPECIAL"];
-const VALID_TIME_RANGES: MassTimeRange[] = ["MORNING", "AFTERNOON", "EVENING"];
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-function parseDayType(value: string | undefined): DayType | undefined {
-  return VALID_DAY_TYPES.includes(value as DayType) ? (value as DayType) : undefined;
+function parseTime(value: string | undefined): string | undefined {
+  return value && TIME_PATTERN.test(value) ? value : undefined;
 }
 
-function parseTimeRange(value: string | undefined): MassTimeRange | undefined {
-  return VALID_TIME_RANGES.includes(value as MassTimeRange) ? (value as MassTimeRange) : undefined;
+function parseProvince(value: string | undefined): string | undefined {
+  return value && VN_PROVINCES.includes(value) ? value : undefined;
 }
 
-function parseDayOfWeek(value: string | undefined): number | undefined {
+function parsePageSize(value: string | undefined): number {
   const n = Number(value);
-  return Number.isInteger(n) && n >= 1 && n <= 7 ? n : undefined;
+  return PAGE_SIZES.includes(n) ? n : PAGE_SIZE;
 }
 
 export default async function HomePage({
@@ -72,10 +86,12 @@ export default async function HomePage({
   const { t } = getTranslations();
   const search = searchParams.search?.trim() || undefined;
   const page = Number(searchParams.page ?? "0") || 0;
-  const dayType = parseDayType(searchParams.dayType);
-  const dayOfWeek = parseDayOfWeek(searchParams.dayOfWeek);
-  const time = parseTimeRange(searchParams.time);
-  const hasMassFilter = Boolean(dayType || dayOfWeek || time);
+  const pageSize = parsePageSize(searchParams.size);
+  const timeFrom = parseTime(searchParams.timeFrom);
+  const timeTo = parseTime(searchParams.timeTo);
+  const province = parseProvince(searchParams.province);
+  const ward = searchParams.ward?.trim() || undefined;
+  const hasFilter = Boolean(timeFrom || timeTo || province || ward);
 
   let parishes: Parish[] = [];
   let massByParish: Record<number, MassSchedule[]> = {};
@@ -84,9 +100,17 @@ export default async function HomePage({
   let loadError: string | null = null;
 
   try {
-    // The mass-schedule filter (dayType/dayOfWeek/time) is applied server-side,
-    // so the directory list here is already the correctly filtered + paginated page.
-    const result = await listParishes({ search, dayType, dayOfWeek, time, page, size: PAGE_SIZE });
+    // The mass-schedule and region filters are applied server-side, so the
+    // directory list here is already the correctly filtered + paginated page.
+    const result = await listParishes({
+      search,
+      province,
+      ward,
+      timeFrom,
+      timeTo,
+      page,
+      size: pageSize,
+    });
     parishes = result.content;
     totalPages = result.totalPages;
     totalElements = result.totalElements;
@@ -102,7 +126,7 @@ export default async function HomePage({
   }
 
   const jsonLd =
-    parishes.length > 0 ? parishListJsonLd(parishes, massByParish, page * PAGE_SIZE) : null;
+    parishes.length > 0 ? parishListJsonLd(parishes, massByParish, page * pageSize) : null;
 
   return (
     <div className="space-y-6">
@@ -121,7 +145,11 @@ export default async function HomePage({
 
       <div className="space-y-3">
         <SearchBar />
-        <MassFilter />
+        <div className="flex flex-wrap items-center gap-2">
+          <RegionFilter />
+          <MassFilter />
+          <ClearFiltersButton />
+        </div>
       </div>
 
       {loadError ? (
@@ -130,7 +158,7 @@ export default async function HomePage({
         <EmptyState
           title={t("home.emptyTitle")}
           description={
-            hasMassFilter
+            hasFilter
               ? t("home.emptyFilter")
               : search
                 ? t("home.emptySearch", { query: search })
@@ -150,7 +178,10 @@ export default async function HomePage({
               />
             ))}
           </div>
-          <QueryPagination page={page} totalPages={totalPages} />
+          <div className="flex flex-wrap justify-center gap-3 [&>nav]:mt-0">
+            <QueryPagination page={page} totalPages={totalPages} />
+            <PageSizeSelect defaultSize={PAGE_SIZE} />
+          </div>
         </>
       )}
     </div>
@@ -167,6 +198,7 @@ function ParishCard({
   t: TranslateFn;
 }) {
   const massGroups = groupMassSchedules(massSchedules);
+  const address = formatParishAddress(parish);
   return (
     <Link
       href={`/parishes/${parish.slug}`}
@@ -176,10 +208,10 @@ function ParishCard({
         <h2 className="line-clamp-1 text-base font-semibold text-gray-900 group-hover:text-brand-700 dark:text-gray-100 dark:group-hover:text-brand-400">
           {parish.name}
         </h2>
-        {parish.address && (
+        {address && (
           <p className="mt-2 flex items-start gap-1.5 text-sm text-gray-600 dark:text-gray-400">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
-            <span className="line-clamp-1">{parish.address}</span>
+            <span className="line-clamp-1">{address}</span>
           </p>
         )}
         {parish.phone && (
